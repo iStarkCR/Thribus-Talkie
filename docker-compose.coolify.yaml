@@ -140,6 +140,7 @@ services:
   baileys:
     image: 'ghcr.io/fazer-ai/baileys-api:latest'
     restart: always
+    command: ["bun", "run", "start"]
     environment:
       - NODE_ENV=production
       - API_KEY=${BAILEYS_PROVIDER_DEFAULT_API_KEY}
