@@ -10,6 +10,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - baileys
     environment:
       - NODE_ENV=production
       - RAILS_ENV=production
@@ -65,6 +66,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - baileys
     environment:
       - NODE_ENV=production
       - RAILS_ENV=production
