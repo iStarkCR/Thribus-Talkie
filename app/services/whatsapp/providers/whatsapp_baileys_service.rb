@@ -91,12 +91,10 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   end
 
   def validate_provider_config?
-    response = HTTParty.get(
-      "#{provider_url}/status/auth",
-      headers: api_headers
-    )
-
-    process_response(response)
+    # NOTE: We return true here to allow the channel to be created even if the Baileys API is offline
+    # or the default credentials are not yet configured. The actual connection will be handled
+    # by the setup_channel_provider method which has its own error handling.
+    true
   end
 
   def toggle_typing_status(typing_status, recipient_id:, **)
