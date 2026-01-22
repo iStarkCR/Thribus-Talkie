@@ -138,12 +138,15 @@ services:
       retries: 10
 
   baileys:
-    image: 'ghcr.io/fazer-ai/baileys-api:latest'
+    image: 'ghcr.io/fazer-ai/baileys-api:main'
     restart: always
-    command: ["bun", "run", "start"]
     environment:
       - NODE_ENV=production
       - API_KEY=${BAILEYS_PROVIDER_DEFAULT_API_KEY}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     healthcheck:
       test:
         - CMD-SHELL
