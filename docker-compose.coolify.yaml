@@ -136,3 +136,17 @@ services:
       interval: 20s
       timeout: 20s
       retries: 10
+
+  baileys:
+    image: 'ghcr.io/fazer-ai/baileys-api:latest'
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - API_KEY=${BAILEYS_PROVIDER_DEFAULT_API_KEY}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget -qO- http://127.0.0.1:3000/health || exit 1'
+      interval: 20s
+      timeout: 10s
+      retries: 5
