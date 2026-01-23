@@ -141,6 +141,8 @@ services:
     command: ["bun", "run", "start"]
     environment:
       - API_KEY=${BAILEYS_PROVIDER_DEFAULT_API_KEY}
+      - BAILEYS_API_KEY=${BAILEYS_PROVIDER_DEFAULT_API_KEY}
+      - BAILEYS_PROVIDER_DEFAULT_API_KEY=${BAILEYS_PROVIDER_DEFAULT_API_KEY}
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
     depends_on:
