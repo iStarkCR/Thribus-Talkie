@@ -272,7 +272,7 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
         enabled: true,
         url: webhook_url,
         webhook_by_events: false,
-        webhook_base64: false,
+        webhook_base64: true,
         events: [
           'QRCODE_UPDATED',
           'CONNECTION_UPDATE',
