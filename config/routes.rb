@@ -38,6 +38,7 @@ Rails.application.routes.draw do
   get '/api', to: 'api#index'
   namespace :api, defaults: { format: 'json' } do
     namespace :v1 do
+      post 'webhooks/evolution', to: 'webhooks/evolution#create'
       # ----------------------------------
       # start of account scoped api routes
       resources :accounts, only: [:create, :show, :update] do
@@ -459,6 +460,7 @@ Rails.application.routes.draw do
     namespace :enterprise, defaults: { format: 'json' } do
       namespace :api do
         namespace :v1 do
+      post 'webhooks/evolution', to: 'webhooks/evolution#create'
           resources :accounts do
             member do
               post :checkout
@@ -481,6 +483,7 @@ Rails.application.routes.draw do
   namespace :platform, defaults: { format: 'json' } do
     namespace :api do
       namespace :v1 do
+      post 'webhooks/evolution', to: 'webhooks/evolution#create'
         resources :users, only: [:create, :show, :update, :destroy] do
           member do
             get :login
@@ -506,6 +509,7 @@ Rails.application.routes.draw do
   namespace :public, defaults: { format: 'json' } do
     namespace :api do
       namespace :v1 do
+      post 'webhooks/evolution', to: 'webhooks/evolution#create'
         resources :inboxes do
           scope module: :inboxes do
             resources :contacts, only: [:create, :show, :update] do

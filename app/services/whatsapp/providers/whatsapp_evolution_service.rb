@@ -198,7 +198,9 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     if connect_response.success?
       data = connect_response.parsed_response
       # Se a resposta de conexão já trouxer o QR code (comum na v2), usamos ela
-      if data['base64'] || data.dig('qrcode', 'base64')
+      # Na v2, o base64 pode vir em data['base64'] ou data['code']
+      qr_code = data['base64'] || data['code'] || data.dig('qrcode', 'base64')
+      if qr_code.present?
         Rails.logger.info "[EVOLUTION] QR code found in connect response"
         update_connection_state(data, fetch_qr: true)
         return true
@@ -244,7 +246,8 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     if fetch_qr || connection_status == 'connecting'
       # Tenta encontrar o base64 em múltiplos lugares comuns na v2
       qr_data = data['qrcode'] || data['qr'] || instance_data['qrcode'] || {}
-      qr_code = qr_data['base64'] || qr_data['code'] || data['base64'] || instance_data['base64']
+      # Na v2, o campo pode ser 'base64' ou 'code'
+      qr_code = qr_data['base64'] || qr_data['code'] || data['base64'] || data['code'] || instance_data['base64'] || instance_data['code']
       
       # Se o QR code vier apenas como texto (não data-url), adiciona o prefixo
       if qr_code.present? && !qr_code.start_with?('data:image')
