@@ -69,15 +69,18 @@ class Api::V1::Webhooks::EvolutionController < ApplicationController
   end
 
   def find_channel_by_instance_name(instance_name)
-    # O nome da instância segue o padrão "talki_{channel_id}"
-    if instance_name =~ /^talki_(\d+)$/
-      channel_id = Regexp.last_match(1)
-      Channel::Whatsapp.find_by(id: channel_id, provider: 'evolution')
-    else
-      # Fallback: busca por provider_config
-      Channel::Whatsapp.where(provider: 'evolution').find do |channel|
-        channel.provider_service.send(:instance_name) == instance_name
-      end
+    # 1. Tenta extrair o ID do padrão "talki_{id}"
+    if instance_name =~ /talki_(\d+)/
+      channel_id = $1
+      channel = Channel::Whatsapp.find_by(id: channel_id, provider: 'evolution')
+      return channel if channel
+    end
+
+    # 2. Fallback: Busca por qualquer canal Evolution onde o nome da instância coincida
+    # Isso resolve casos onde o ID no banco mudou mas o nome na Evolution permaneceu
+    Channel::Whatsapp.where(provider: 'evolution').find do |c|
+      # Compara o nome da instância gerado pelo serviço com o nome recebido
+      c.provider_service.send(:instance_name) == instance_name
     end
   end
 
