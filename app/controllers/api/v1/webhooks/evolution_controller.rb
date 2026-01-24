@@ -1,6 +1,6 @@
 class Api::V1::Webhooks::EvolutionController < ApplicationController
-  # Ignora a verificação de autenticidade para webhooks externos
-  skip_before_action :verify_authenticity_token, raise: false
+  # Forma recomendada para APIs/Webhooks: trata a sessão como nula se o token CSRF falhar
+  protect_from_forgery with: :null_session
   
   # Ignora a autenticação de usuário (padrão em webhooks)
   skip_before_action :authenticate_user!, raise: false
