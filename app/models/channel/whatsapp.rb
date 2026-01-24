@@ -37,7 +37,7 @@ class Channel::Whatsapp < ApplicationRecord
   has_one :inbox, as: :channel, dependent: :destroy
 
   after_create :sync_templates
-  after_create :setup_channel_provider_if_supported
+  after_commit :setup_channel_provider_if_supported, on: :create
   before_destroy :teardown_webhooks
 
   before_destroy :disconnect_channel_provider, if: -> { provider_service.respond_to?(:disconnect_channel_provider) }
