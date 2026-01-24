@@ -37,6 +37,7 @@ class Channel::Whatsapp < ApplicationRecord
   has_one :inbox, as: :channel, dependent: :destroy
 
   after_create :sync_templates
+  after_create :setup_channel_provider_if_supported
   before_destroy :teardown_webhooks
 
   before_destroy :disconnect_channel_provider, if: -> { provider_service.respond_to?(:disconnect_channel_provider) }
@@ -179,5 +180,15 @@ class Channel::Whatsapp < ApplicationRecord
 
     @webhook_teardown_initiated = true
     Whatsapp::WebhookTeardownService.new(self).perform
+  end
+
+  def setup_channel_provider_if_supported
+    return unless provider_service.respond_to?(:setup_channel_provider)
+
+    Rails.logger.info "[WHATSAPP] Automatically calling setup_channel_provider for provider: #{provider}"
+    setup_channel_provider
+  rescue StandardError => e
+    Rails.logger.error "[WHATSAPP] setup_channel_provider failed: #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
   end
 end
