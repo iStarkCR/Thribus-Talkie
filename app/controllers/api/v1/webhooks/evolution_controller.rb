@@ -1,6 +1,7 @@
 class Api::V1::Webhooks::EvolutionController < ApplicationController
   skip_before_action :verify_authenticity_token
   skip_before_action :authenticate_user!, raise: false
+  skip_before_action :set_current_user, raise: false
 
   def create
     Rails.logger.info "[EVOLUTION WEBHOOK] Received webhook: #{params.to_json}"
