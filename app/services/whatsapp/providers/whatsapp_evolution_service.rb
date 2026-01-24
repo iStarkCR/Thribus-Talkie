@@ -1,24 +1,22 @@
 class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseService
   class ProviderUnavailableError < StandardError; end
 
-  DEFAULT_URL = ENV.fetch('EVOLUTION_API_URL', nil)
-  DEFAULT_API_KEY = ENV.fetch('EVOLUTION_API_KEY', nil)
+  DEFAULT_URL = ENV.fetch('EVOLUTION_API_URL', 'https://evolution.thribustech.com')
+  DEFAULT_API_KEY = ENV.fetch('EVOLUTION_API_KEY', '5CKFPNK277oh7ONsNyjG8e0dO9oaqRsD')
 
   def setup_channel_provider
-    # Na Evolution API, "setup" significa criar a instância se ela não existir
-    # ou retornar o QR Code se ela já existir mas estiver desconectada.
-    
-    # Primeiro, tentamos criar a instância
+    # Na Evolution API v2, tentamos criar a instância
     response = HTTParty.post(
       "#{provider_url}/instance/create",
       headers: api_headers,
       body: {
         instanceName: instance_name,
+        token: instance_token,
         qrcode: true,
         integration: 'WHATSAPP-BAILEYS',
         chatwootAccountId: whatsapp_channel.account_id.to_s,
-        chatwootToken: whatsapp_channel.account.users.first.access_token, # Simplificação, idealmente seria um token de sistema
-        chatwootUrl: ENV.fetch('FRONTEND_URL', ''),
+        chatwootToken: whatsapp_channel.account.users.first.access_token,
+        chatwootUrl: ENV.fetch('FRONTEND_URL', 'https://talki.thribustech.com'),
         chatwootSignMsg: true,
         chatwootReopenConversation: true,
         chatwootConversationPending: false,
@@ -33,7 +31,8 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
       data = response.parsed_response
       update_connection_state(data)
       return true
-    elsif response.code == 403 # Instância já existe
+    elsif response.code == 403 || response.parsed_response&.dig('message')&.include?('already exists')
+      # Se a instância já existe, apenas buscamos o estado atual
       return fetch_connection_state
     end
 
@@ -80,7 +79,6 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     )
 
     if response.success?
-      # Atualizar ID da mensagem externa se necessário
       return response.parsed_response.dig('key', 'id')
     end
     
@@ -95,7 +93,6 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   end
 
   def validate_provider_config?
-    # Verifica se a API está online e a chave é válida
     response = HTTParty.get(
       "#{provider_url}/instance/fetchInstances",
       headers: api_headers
@@ -114,8 +111,13 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   end
 
   def instance_name
-    # Usamos o ID do canal ou número de telefone como nome da instância
-    "cw_#{whatsapp_channel.id}"
+    # Nome amigável para a instância
+    "talki_#{whatsapp_channel.id}"
+  end
+
+  def instance_token
+    # Token fixo ou gerado para a instância
+    "token_#{whatsapp_channel.id}"
   end
 
   def fetch_connection_state
@@ -132,10 +134,7 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   end
 
   def update_connection_state(data)
-    # Mapeia o status da Evolution API para o formato do Chatwoot
-    # Evolution: open, connecting, close
-    # Chatwoot espera: connection, qr_data_url
-    
+    # Mapeia o status da Evolution API v2 para o Chatwoot
     connection_status = data.dig('instance', 'state') || data['state'] || 'close'
     qr_code = data.dig('qrcode', 'base64') || data['base64']
 
