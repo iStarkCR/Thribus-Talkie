@@ -179,21 +179,55 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     false
   end
 
-  def update_connection_state(data)
+  # Método para buscar QR code sob demanda (quando usuário clicar em "Conectar")
+  def fetch_qr_code
+    Rails.logger.info "[EVOLUTION] Fetching QR code for instance: #{instance_name}"
+    
+    # Primeiro conecta a instância para gerar o QR code
+    connect_response = HTTParty.get(
+      "#{provider_url}/instance/connect/#{instance_name}",
+      headers: api_headers
+    )
+
+    Rails.logger.info "[EVOLUTION] Connect response: #{connect_response.code}"
+
+    # Busca o QR code
+    qr_response = HTTParty.get(
+      "#{provider_url}/instance/connectionState/#{instance_name}",
+      headers: api_headers
+    )
+
+    if qr_response.success?
+      Rails.logger.info "[EVOLUTION] QR code fetched successfully"
+      update_connection_state(qr_response.parsed_response, fetch_qr: true)
+      return true
+    end
+    
+    Rails.logger.error "[EVOLUTION] Failed to fetch QR code: #{qr_response.code}"
+    false
+  end
+
+  def update_connection_state(data, fetch_qr: false)
     # Mapeia o status da Evolution API v2 para o Chatwoot
     # Suporta diferentes formatos de resposta da v2
     instance_data = data['instance'] || data
-    connection_status = instance_data['state'] || 'close'
+    connection_status = instance_data['state'] || instance_data['status'] || 'close'
+    instance_id = instance_data['instanceId'] || instance_data['instance_id']
     
-    # Busca o QR Code se disponível
-    qr_data = data['qrcode'] || data['qr'] || {}
-    qr_code = qr_data['base64'] || qr_data['code'] || data['base64']
+    # Só busca QR Code se explicitamente solicitado
+    qr_code = nil
+    if fetch_qr
+      qr_data = data['qrcode'] || data['qr'] || {}
+      qr_code = qr_data['base64'] || qr_data['code'] || data['base64']
+    end
 
     Rails.logger.info "[EVOLUTION] Updating connection state: #{connection_status}"
-    Rails.logger.info "[EVOLUTION] QR Code present: #{qr_code.present?}"
+    Rails.logger.info "[EVOLUTION] Instance ID: #{instance_id}"
+    Rails.logger.info "[EVOLUTION] QR Code fetched: #{fetch_qr}, present: #{qr_code.present?}"
 
     whatsapp_channel.update_provider_connection!({
       connection: connection_status,
+      instance_id: instance_id,
       qr_data_url: qr_code,
       updated_at: Time.now.to_i
     })
