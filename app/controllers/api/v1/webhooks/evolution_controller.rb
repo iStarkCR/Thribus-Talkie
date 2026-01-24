@@ -1,7 +1,13 @@
 class Api::V1::Webhooks::EvolutionController < ApplicationController
-  skip_before_action :verify_authenticity_token
+  # Ignora a verificação de autenticidade para webhooks externos
+  skip_before_action :verify_authenticity_token, raise: false
+  
+  # Ignora a autenticação de usuário (padrão em webhooks)
   skip_before_action :authenticate_user!, raise: false
-  skip_before_action :set_current_user, raise: false
+  
+  # Ignora o set_current_user se ele estiver definido (comum em controllers de API)
+  # Usamos rescue para evitar que o Rails falhe se o método não estiver definido
+  before_action :skip_current_user_check
 
   def create
     Rails.logger.info "[EVOLUTION WEBHOOK] Received webhook: #{params.to_json}"
@@ -45,6 +51,15 @@ class Api::V1::Webhooks::EvolutionController < ApplicationController
   end
 
   private
+
+  def skip_current_user_check
+    # Tenta pular o callback de forma segura
+    begin
+      self.class.skip_before_action(:set_current_user, raise: false)
+    rescue
+      nil
+    end
+  end
 
   def find_channel_by_instance_name(instance_name)
     # O nome da instância segue o padrão "talki_{channel_id}"
