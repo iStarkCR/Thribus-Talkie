@@ -6,39 +6,64 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   DEFAULT_API_KEY = ENV.fetch('EVOLUTION_API_KEY', '5CKFPNK277oh7ONsNyjG8e0dO9oaqRsD')
 
   def setup_channel_provider
+    Rails.logger.info "[EVOLUTION] Starting setup for instance: #{instance_name}"
+    
+    # Configura o webhook antes de criar a instância
+    webhook_url = "#{chatwoot_base_url}/api/v1/webhooks/evolution"
+    
     # Tenta criar a instância na Evolution API v2
+    payload = {
+      instanceName: instance_name,
+      token: instance_token,
+      qrcode: true,
+      integration: 'WHATSAPP-BAILEYS',
+      chatwootAccountId: whatsapp_channel.account_id.to_s,
+      chatwootToken: admin_access_token,
+      chatwootUrl: chatwoot_base_url,
+      chatwootSignMsg: true,
+      chatwootReopenConversation: true,
+      chatwootConversationPending: false,
+      chatwootImportContacts: true,
+      chatwootNameInbox: whatsapp_channel.inbox&.name || instance_name,
+      chatwootMergeBrazilContacts: true,
+      chatwootImportMessages: false
+    }
+    
+    Rails.logger.info "[EVOLUTION] Creating instance with payload: #{payload.except(:chatwootToken).to_json}"
+    
     response = HTTParty.post(
       "#{provider_url}/instance/create",
       headers: api_headers,
-      body: {
-        instanceName: instance_name,
-        token: instance_token,
-        qrcode: true,
-        integration: 'WHATSAPP-BAILEYS',
-        chatwootAccountId: whatsapp_channel.account_id.to_s,
-        chatwootToken: whatsapp_channel.account.users.first.access_token,
-        chatwootUrl: 'https://talki.thribustech.com',
-        chatwootSignMsg: true,
-        chatwootReopenConversation: true,
-        chatwootConversationPending: false,
-        chatwootImportContacts: true,
-        chatwootNameInbox: whatsapp_channel.inbox.name,
-        chatwootMergeBrazilContacts: true,
-        chatwootImportMessages: false
-      }.to_json
+      body: payload.to_json,
+      timeout: 30
     )
+
+    Rails.logger.info "[EVOLUTION] Response status: #{response.code}"
+    Rails.logger.info "[EVOLUTION] Response body: #{response.body}"
 
     if response.success?
       data = response.parsed_response
+      Rails.logger.info "[EVOLUTION] Instance created successfully"
+      
+      # Configura o webhook após criar a instância
+      setup_webhook(webhook_url)
+      
       update_connection_state(data)
       return true
-    elsif response.code == 403 || (response.parsed_response.is_a?(Hash) && response.parsed_response['message']&.include?('already exists'))
+    elsif response.code == 403 || response.code == 409 || (response.parsed_response.is_a?(Hash) && response.parsed_response['message']&.include?('already exists'))
       # Se a instância já existe, busca o estado atual (QR Code ou Conectado)
+      Rails.logger.info "[EVOLUTION] Instance already exists, fetching current state"
+      setup_webhook(webhook_url)
       return fetch_connection_state
     end
 
-    Rails.logger.error "[EVOLUTION] Setup failed: #{response.body}"
-    false
+    error_message = response.parsed_response.is_a?(Hash) ? response.parsed_response['message'] : response.body
+    Rails.logger.error "[EVOLUTION] Setup failed: #{error_message}"
+    raise ProviderUnavailableError, "Failed to create Evolution instance: #{error_message}"
+  rescue StandardError => e
+    Rails.logger.error "[EVOLUTION] Exception during setup: #{e.class} - #{e.message}"
+    Rails.logger.error e.backtrace.join("\n")
+    raise
   end
 
   def disconnect_channel_provider
@@ -89,11 +114,23 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   end
 
   def validate_provider_config?
+    Rails.logger.info "[EVOLUTION] Validating provider config for URL: #{provider_url}"
     response = HTTParty.get(
       "#{provider_url}/instance/fetchInstances",
-      headers: api_headers
+      headers: api_headers,
+      timeout: 10
     )
-    response.success?
+    
+    if response.success?
+      Rails.logger.info "[EVOLUTION] Provider config is valid"
+      true
+    else
+      Rails.logger.error "[EVOLUTION] Provider config validation failed: #{response.code} - #{response.body}"
+      false
+    end
+  rescue StandardError => e
+    Rails.logger.error "[EVOLUTION] Exception validating provider config: #{e.message}"
+    false
   end
 
   private
@@ -135,13 +172,64 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     connection_status = instance_data['state'] || 'close'
     
     # Busca o QR Code se disponível
-    qr_data = data['qrcode'] || {}
-    qr_code = qr_data['base64'] || data['base64']
+    qr_data = data['qrcode'] || data['qr'] || {}
+    qr_code = qr_data['base64'] || qr_data['code'] || data['base64']
+
+    Rails.logger.info "[EVOLUTION] Updating connection state: #{connection_status}"
+    Rails.logger.info "[EVOLUTION] QR Code present: #{qr_code.present?}"
 
     whatsapp_channel.update_provider_connection!({
       connection: connection_status,
       qr_data_url: qr_code,
       updated_at: Time.now.to_i
     })
+  end
+
+  def setup_webhook(webhook_url)
+    Rails.logger.info "[EVOLUTION] Setting up webhook: #{webhook_url}"
+    
+    webhook_payload = {
+      webhook: {
+        enabled: true,
+        url: webhook_url,
+        webhook_by_events: false,
+        webhook_base64: false,
+        events: [
+          'QRCODE_UPDATED',
+          'CONNECTION_UPDATE',
+          'MESSAGES_UPSERT',
+          'MESSAGES_UPDATE',
+          'SEND_MESSAGE'
+        ]
+      }
+    }
+    
+    response = HTTParty.post(
+      "#{provider_url}/webhook/set/#{instance_name}",
+      headers: api_headers,
+      body: webhook_payload.to_json,
+      timeout: 10
+    )
+    
+    if response.success?
+      Rails.logger.info "[EVOLUTION] Webhook configured successfully"
+      true
+    else
+      Rails.logger.warn "[EVOLUTION] Failed to configure webhook: #{response.body}"
+      false
+    end
+  rescue StandardError => e
+    Rails.logger.error "[EVOLUTION] Exception setting up webhook: #{e.message}"
+    false
+  end
+
+  def chatwoot_base_url
+    ENV.fetch('FRONTEND_URL', 'https://talki.thribustech.com').delete_suffix('/')
+  end
+
+  def admin_access_token
+    # Busca o token do primeiro admin da conta
+    admin_user = whatsapp_channel.account.users.find_by(role: :administrator) || whatsapp_channel.account.users.first
+    admin_user&.access_token.presence || raise(ProviderUnavailableError, 'No admin user found with access token')
   end
 end
