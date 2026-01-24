@@ -31,10 +31,11 @@ const showLinkDeviceModal = reactive({
 });
 
 // Use useInbox composable with the inbox ID
-const {
+  const {
   isAWhatsAppCloudChannel,
   isAWhatsAppBaileysChannel,
   isAWhatsAppZapiChannel,
+  isAWhatsAppEvolutionChannel,
   isATwilioChannel,
   isASmsInbox,
   isALineChannel,
@@ -236,7 +237,7 @@ onMounted(() => {
           />
         </div>
         <div
-          v-if="isAWhatsAppBaileysChannel || isAWhatsAppZapiChannel"
+          v-if="isAWhatsAppBaileysChannel || isAWhatsAppZapiChannel || isAWhatsAppEvolutionChannel"
           class="w-[50%] max-w-[50%] ml-[25%]"
         >
           <NextButton @click="onOpenLinkDeviceModal">
@@ -267,6 +268,8 @@ onMounted(() => {
             isAWhatsAppChannel &&
             !isAWhatsAppBaileysChannel &&
             !isAWhatsAppZapiChannel &&
+            !isAWhatsAppCloudChannel &&
+            !isAWhatsAppEvolutionChannel &&
             qrCodes.whatsapp
           "
           class="flex flex-col gap-3 items-center mt-8"
