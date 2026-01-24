@@ -243,7 +243,8 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
 
   def admin_access_token
     # Busca o token do primeiro admin da conta
-    admin_user = whatsapp_channel.account.users.find_by(role: :administrator) || whatsapp_channel.account.users.first
+    # Usa o método helper 'administrators' que já faz o join correto com account_users
+    admin_user = whatsapp_channel.account.administrators.first || whatsapp_channel.account.users.first
     admin_user&.access_token.presence || raise(ProviderUnavailableError, 'No admin user found with access token')
   end
 end
