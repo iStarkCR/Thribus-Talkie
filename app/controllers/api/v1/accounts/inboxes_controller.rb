@@ -76,6 +76,20 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
     head :ok
   end
 
+  def fetch_qr_code
+    channel = @inbox.channel
+
+    unless channel.respond_to?(:fetch_qr_code)
+      render json: { error: 'Channel does not support QR code fetching' }, status: :unprocessable_entity and return
+    end
+
+    if channel.fetch_qr_code
+      render json: { message: 'QR code fetch initiated' }, status: :ok
+    else
+      render json: { error: 'Failed to fetch QR code' }, status: :unprocessable_entity
+    end
+  end
+
   def disconnect_channel_provider
     channel = @inbox.channel
 

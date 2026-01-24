@@ -31,8 +31,14 @@ const handleError = e => {
 };
 const setup = () => {
   loading.value = true;
+  // Se já temos um instance_id, apenas buscamos o QR code
+  // Caso contrário (fallback), chamamos o setup completo
+  const action = props.inbox.provider_connection?.instance_id 
+    ? 'inboxes/fetchQrCode' 
+    : 'inboxes/setupChannelProvider';
+    
   store
-    .dispatch('inboxes/setupChannelProvider', props.inbox.id)
+    .dispatch(action, props.inbox.id)
     .catch(handleError);
 };
 const disconnect = () => {
@@ -43,9 +49,8 @@ const disconnect = () => {
 };
 
 onMounted(() => {
-  if (!connection.value || connection.value === 'close') {
-    setup();
-  }
+  // Removido o setup automático no mount para seguir o workflow do Fazer.ai
+  // O usuário deve clicar no botão para iniciar a conexão e ver o QR code
 });
 onUnmounted(() => {
   if (

@@ -227,22 +227,35 @@
         }
       },
       "WHATSAPP": {
-        "TITLE": "Canal do WhatsApp",
-        "DESC": "Comece a oferecer suporte a seus clientes pelo WhatsApp.",
+        "TITLE": "Canal WhatsApp",
+        "DESC": "Comece a oferecer suporte a seus clientes via WhatsApp.",
         "PROVIDERS": {
           "LABEL": "Provedor de API",
           "WHATSAPP_EMBEDDED": "WhatsApp Business",
           "TWILIO": "Twilio",
-          "WHATSAPP_CLOUD": "Cloud do WhatsApp",
+          "WHATSAPP_CLOUD": "WhatsApp Cloud",
           "WHATSAPP_CLOUD_DESC": "Configuração rápida via Meta",
-          "TWILIO_DESC": "Conectar através de credenciais Twilio",
+          "TWILIO_DESC": "Conectar via credenciais Twilio",
           "360_DIALOG": "360Dialog",
           "BAILEYS": "Baileys",
-          "BAILEYS_DESC": "Conectar via API não-oficial Baileys",
+          "BAILEYS_DESC": "Conectar via API não oficial Baileys",
           "ZAPI": "Z-API",
-          "ZAPI_DESC": "Conectar via API não-oficial Z-API",
+          "ZAPI_DESC": "Conectar via API não oficial Z-API",
           "EVOLUTION": "Evolution API",
-          "EVOLUTION_DESC": "Conectar via Evolution API (QR Code direto)"
+          "EVOLUTION_DESC": "Conectar via Evolution API (QR Code Direto)"
+        },
+        "EXTERNAL_PROVIDER": {
+          "SUBTITLE": "Clique abaixo para configurar o canal do WhatsApp.",
+          "LINK_BUTTON": "Vincular dispositivo",
+          "LINK_DEVICE_MODAL": {
+            "TITLE": "Vincule seu dispositivo",
+            "SUBTITLE": "Escaneie o código QR para vincular seu dispositivo. Certifique-se de que o número de telefone está correto antes de escanear.",
+            "LOADING_QRCODE": "Carregando código QR...",
+            "RECONNECTING": "Conectando...",
+            "LINK_DEVICE": "Vincular dispositivo",
+            "DISCONNECT": "Desconectar",
+            "CONNECTED": "Seu dispositivo foi conectado com sucesso. Agora você pode começar a enviar e receber mensagens."
+          }
         },
         "SELECT_PROVIDER": {
           "TITLE": "Selecione seu provedor de API",

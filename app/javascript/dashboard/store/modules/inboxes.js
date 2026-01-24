@@ -367,6 +367,13 @@ export const actions = {
       throwErrorMessage(error);
     }
   },
+  fetchQrCode: async (_, inboxId) => {
+    try {
+      await InboxesAPI.fetchQrCode(inboxId);
+    } catch (error) {
+      throwErrorMessage(error);
+    }
+  },
   disconnectChannelProvider: async (_, inboxId) => {
     try {
       await InboxesAPI.disconnectChannelProvider(inboxId);

@@ -46,6 +46,10 @@ class Inboxes extends CacheEnabledApiClient {
   setupChannelProvider(inboxId) {
     return axios.post(`${this.url}/${inboxId}/setup_channel_provider`);
   }
+  
+  fetchQrCode(inboxId) {
+    return axios.post(`${this.url}/${inboxId}/fetch_qr_code`);
+  }
 
   disconnectChannelProvider(inboxId) {
     return axios.post(`${this.url}/${inboxId}/disconnect_channel_provider`);
