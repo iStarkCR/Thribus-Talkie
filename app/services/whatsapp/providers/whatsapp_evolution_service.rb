@@ -1,11 +1,12 @@
 class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseService
   class ProviderUnavailableError < StandardError; end
 
+  # Valores padrão baseados nas configurações do usuário
   DEFAULT_URL = ENV.fetch('EVOLUTION_API_URL', 'https://evolution.thribustech.com')
   DEFAULT_API_KEY = ENV.fetch('EVOLUTION_API_KEY', '5CKFPNK277oh7ONsNyjG8e0dO9oaqRsD')
 
   def setup_channel_provider
-    # Na Evolution API v2, tentamos criar a instância
+    # Tenta criar a instância na Evolution API v2
     response = HTTParty.post(
       "#{provider_url}/instance/create",
       headers: api_headers,
@@ -16,7 +17,7 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
         integration: 'WHATSAPP-BAILEYS',
         chatwootAccountId: whatsapp_channel.account_id.to_s,
         chatwootToken: whatsapp_channel.account.users.first.access_token,
-        chatwootUrl: ENV.fetch('FRONTEND_URL', 'https://talki.thribustech.com'),
+        chatwootUrl: 'https://talki.thribustech.com',
         chatwootSignMsg: true,
         chatwootReopenConversation: true,
         chatwootConversationPending: false,
@@ -31,8 +32,8 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
       data = response.parsed_response
       update_connection_state(data)
       return true
-    elsif response.code == 403 || response.parsed_response&.dig('message')&.include?('already exists')
-      # Se a instância já existe, apenas buscamos o estado atual
+    elsif response.code == 403 || (response.parsed_response.is_a?(Hash) && response.parsed_response['message']&.include?('already exists'))
+      # Se a instância já existe, busca o estado atual (QR Code ou Conectado)
       return fetch_connection_state
     end
 
@@ -45,7 +46,6 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
       "#{provider_url}/instance/logout/#{instance_name}",
       headers: api_headers
     )
-    
     response.success?
   end
 
@@ -78,11 +78,7 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
       body: payload.to_json
     )
 
-    if response.success?
-      return response.parsed_response.dig('key', 'id')
-    end
-    
-    nil
+    response.success? ? response.parsed_response.dig('key', 'id') : nil
   end
 
   def api_headers
@@ -103,7 +99,8 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   private
 
   def provider_url
-    whatsapp_channel.provider_config['provider_url'].presence || DEFAULT_URL
+    url = whatsapp_channel.provider_config['provider_url'].presence || DEFAULT_URL
+    url.delete_suffix('/')
   end
 
   def api_key
@@ -111,12 +108,10 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   end
 
   def instance_name
-    # Nome amigável para a instância
     "talki_#{whatsapp_channel.id}"
   end
 
   def instance_token
-    # Token fixo ou gerado para a instância
     "token_#{whatsapp_channel.id}"
   end
 
@@ -135,8 +130,13 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
 
   def update_connection_state(data)
     # Mapeia o status da Evolution API v2 para o Chatwoot
-    connection_status = data.dig('instance', 'state') || data['state'] || 'close'
-    qr_code = data.dig('qrcode', 'base64') || data['base64']
+    # Suporta diferentes formatos de resposta da v2
+    instance_data = data['instance'] || data
+    connection_status = instance_data['state'] || 'close'
+    
+    # Busca o QR Code se disponível
+    qr_data = data['qrcode'] || {}
+    qr_code = qr_data['base64'] || data['base64']
 
     whatsapp_channel.update_provider_connection!({
       connection: connection_status,
