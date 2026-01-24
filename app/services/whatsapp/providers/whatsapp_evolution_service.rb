@@ -187,6 +187,7 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     Rails.logger.info "[EVOLUTION] Fetching QR code for instance: #{instance_name}"
     
     # Primeiro conecta a instância para gerar o QR code
+    # Na v2, o endpoint /instance/connect retorna o QR code diretamente se a instância estiver desconectada
     connect_response = HTTParty.get(
       "#{provider_url}/instance/connect/#{instance_name}",
       headers: api_headers
@@ -194,14 +195,24 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
 
     Rails.logger.info "[EVOLUTION] Connect response: #{connect_response.code}"
 
-    # Busca o QR code
+    if connect_response.success?
+      data = connect_response.parsed_response
+      # Se a resposta de conexão já trouxer o QR code (comum na v2), usamos ela
+      if data['base64'] || data.dig('qrcode', 'base64')
+        Rails.logger.info "[EVOLUTION] QR code found in connect response"
+        update_connection_state(data, fetch_qr: true)
+        return true
+      end
+    end
+
+    # Fallback: Busca o estado da conexão se o connect não retornou o QR diretamente
     qr_response = HTTParty.get(
       "#{provider_url}/instance/connectionState/#{instance_name}",
       headers: api_headers
     )
 
     if qr_response.success?
-      Rails.logger.info "[EVOLUTION] QR code fetched successfully"
+      Rails.logger.info "[EVOLUTION] QR code fetched from connectionState"
       update_connection_state(qr_response.parsed_response, fetch_qr: true)
       return true
     end
@@ -214,19 +225,36 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     # Mapeia o status da Evolution API v2 para o Chatwoot
     # Suporta diferentes formatos de resposta da v2
     instance_data = data['instance'] || data
-    connection_status = instance_data['state'] || instance_data['status'] || 'close'
+    
+    # Na v2, o status pode vir em 'state' ou 'status'. 
+    # Se estiver gerando QR Code, o status costuma ser 'connecting' ou 'qrcode'
+    raw_status = instance_data['state'] || instance_data['status'] || 'close'
+    
+    # Normaliza o status para o que o frontend do Chatwoot espera
+    connection_status = case raw_status.to_s.downcase
+                       when 'open', 'connected' then 'open'
+                       when 'connecting', 'qrcode', 'pairing' then 'connecting'
+                       else 'close'
+                       end
+
     instance_id = instance_data['instanceId'] || instance_data['instance_id']
     
-    # Só busca QR Code se explicitamente solicitado
+    # Só busca QR Code se explicitamente solicitado ou se o status indicar necessidade
     qr_code = nil
-    if fetch_qr
-      qr_data = data['qrcode'] || data['qr'] || {}
-      qr_code = qr_data['base64'] || qr_data['code'] || data['base64']
+    if fetch_qr || connection_status == 'connecting'
+      # Tenta encontrar o base64 em múltiplos lugares comuns na v2
+      qr_data = data['qrcode'] || data['qr'] || instance_data['qrcode'] || {}
+      qr_code = qr_data['base64'] || qr_data['code'] || data['base64'] || instance_data['base64']
+      
+      # Se o QR code vier apenas como texto (não data-url), adiciona o prefixo
+      if qr_code.present? && !qr_code.start_with?('data:image')
+        qr_code = "data:image/png;base64,#{qr_code}"
+      end
     end
 
-    Rails.logger.info "[EVOLUTION] Updating connection state: #{connection_status}"
+    Rails.logger.info "[EVOLUTION] Raw Status: #{raw_status} -> Normalized: #{connection_status}"
     Rails.logger.info "[EVOLUTION] Instance ID: #{instance_id}"
-    Rails.logger.info "[EVOLUTION] QR Code fetched: #{fetch_qr}, present: #{qr_code.present?}"
+    Rails.logger.info "[EVOLUTION] QR Code present: #{qr_code.present?}"
 
     whatsapp_channel.update_provider_connection!({
       connection: connection_status,
