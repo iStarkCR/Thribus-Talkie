@@ -159,7 +159,10 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
   end
 
   def instance_name
-    "talki_#{whatsapp_channel.id}"
+    # Usa o nome da inbox se disponível, caso contrário usa o padrão talki_id
+    # Remove caracteres especiais e espaços para garantir compatibilidade com a Evolution API
+    name = whatsapp_channel.inbox&.name || "talki_#{whatsapp_channel.id}"
+    name.parameterize(separator: '_')
   end
 
   def instance_token

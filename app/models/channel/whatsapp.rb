@@ -37,7 +37,9 @@ class Channel::Whatsapp < ApplicationRecord
   has_one :inbox, as: :channel, dependent: :destroy
 
   after_create :sync_templates
-  after_commit :setup_channel_provider_if_supported, on: :create
+  # Para o provider 'evolution', não queremos criar a instância automaticamente no after_create
+  # pois o usuário deve clicar no botão "Vincular Dispositivo" para gerar o QR Code sob demanda.
+  after_commit :setup_channel_provider_if_supported, on: :create, unless: -> { provider == 'evolution' }
   before_destroy :teardown_webhooks
 
   before_destroy :disconnect_channel_provider, if: -> { provider_service.respond_to?(:disconnect_channel_provider) }
