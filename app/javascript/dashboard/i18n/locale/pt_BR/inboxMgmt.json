@@ -240,7 +240,9 @@
           "BAILEYS": "Baileys",
           "BAILEYS_DESC": "Conectar via API não-oficial Baileys",
           "ZAPI": "Z-API",
-          "ZAPI_DESC": "Conectar via API não-oficial Z-API"
+          "ZAPI_DESC": "Conectar via API não-oficial Z-API",
+          "EVOLUTION": "Evolution API",
+          "EVOLUTION_DESC": "Conectar via Evolution API (QR Code direto)"
         },
         "SELECT_PROVIDER": {
           "TITLE": "Selecione seu provedor de API",
@@ -1126,6 +1128,7 @@
       "WHATSAPP": "WhatsApp",
       "WHATSAPP_BAILEYS": "WhatsApp - Baileys",
       "WHATSAPP_ZAPI": "WhatsApp - Z-API",
+      "WHATSAPP_EVOLUTION": "WhatsApp - Evolution API",
       "SMS": "SMS",
       "EMAIL": "e-mail",
       "TELEGRAM": "Telegram",

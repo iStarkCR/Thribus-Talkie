@@ -27,7 +27,7 @@ class Channel::Whatsapp < ApplicationRecord
   EDITABLE_ATTRS = [:phone_number, :provider, { provider_config: {} }].freeze
 
   # default at the moment is 360dialog lets change later.
-  PROVIDERS = %w[default whatsapp_cloud baileys zapi].freeze
+  PROVIDERS = %w[default whatsapp_cloud baileys zapi evolution].freeze
   before_validation :ensure_webhook_verify_token
 
   validates :provider, inclusion: { in: PROVIDERS }
@@ -53,6 +53,8 @@ class Channel::Whatsapp < ApplicationRecord
       Whatsapp::Providers::WhatsappBaileysService.new(whatsapp_channel: self)
     when 'zapi'
       Whatsapp::Providers::WhatsappZapiService.new(whatsapp_channel: self)
+    when 'evolution'
+      Whatsapp::Providers::WhatsappEvolutionService.new(whatsapp_channel: self)
     else
       Whatsapp::Providers::Whatsapp360DialogService.new(whatsapp_channel: self)
     end
