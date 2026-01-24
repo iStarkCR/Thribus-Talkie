@@ -12,8 +12,15 @@ class Api::V1::Webhooks::EvolutionController < ApplicationController
   def create
     Rails.logger.info "[EVOLUTION WEBHOOK] Received webhook: #{params.to_json}"
     
-    event_type = params[:event]
-    instance_name = params.dig(:instance, :instanceName) || params[:instanceName]
+    # Converte params para hash para evitar problemas com ActionController::Parameters
+    payload = params.to_unsafe_h
+    event_type = payload['event']
+    
+    # Tenta extrair o nome da instância de várias formas comuns na Evolution v2
+    instance_name = payload.dig('instance', 'instanceName') || 
+                    payload.dig('data', 'instance') || 
+                    payload['instanceName'] || 
+                    payload['instance']
     
     unless instance_name.present?
       Rails.logger.error "[EVOLUTION WEBHOOK] Missing instance name"

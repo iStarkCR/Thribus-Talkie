@@ -93,11 +93,17 @@ class Whatsapp::EvolutionWebhookService
   end
 
   def extract_qr_code
+    # Tenta extrair o QR Code de todas as variações possíveis da Evolution v2
     @event_data.dig('data', 'qrcode', 'base64') ||
+      @event_data.dig('data', 'qrcode', 'code') ||
       @event_data.dig('qrcode', 'base64') ||
+      @event_data.dig('qrcode', 'code') ||
       @event_data.dig('data', 'base64') ||
+      @event_data.dig('data', 'code') ||
       @event_data.dig('qr', 'base64') ||
-      @event_data['base64']
+      @event_data.dig('qr', 'code') ||
+      @event_data['base64'] ||
+      @event_data['code']
   end
 
   def extract_connection_state
