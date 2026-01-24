@@ -133,6 +133,20 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     false
   end
 
+  # Evolution API não suporta templates de mensagens como WhatsApp Cloud/360Dialog
+  # Este método é chamado pelo Chatwoot mas não faz nada para Evolution
+  def sync_templates
+    Rails.logger.info "[EVOLUTION] sync_templates called - Evolution API does not support message templates"
+    # Marca como atualizado para evitar tentativas repetidas
+    whatsapp_channel.mark_message_templates_updated
+  end
+
+  def send_template(phone_number, template_info)
+    Rails.logger.info "[EVOLUTION] send_template called - Evolution API does not support message templates"
+    # Evolution não suporta envio de templates, retorna nil
+    nil
+  end
+
   private
 
   def provider_url
@@ -231,19 +245,5 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     # Busca o token do primeiro admin da conta
     admin_user = whatsapp_channel.account.users.find_by(role: :administrator) || whatsapp_channel.account.users.first
     admin_user&.access_token.presence || raise(ProviderUnavailableError, 'No admin user found with access token')
-  end
-
-  # Evolution API não suporta templates de mensagens como WhatsApp Cloud/360Dialog
-  # Este método é chamado pelo Chatwoot mas não faz nada para Evolution
-  def sync_templates
-    Rails.logger.info "[EVOLUTION] sync_templates called - Evolution API does not support message templates"
-    # Marca como atualizado para evitar tentativas repetidas
-    whatsapp_channel.mark_message_templates_updated
-  end
-
-  def send_template(phone_number, template_info)
-    Rails.logger.info "[EVOLUTION] send_template called - Evolution API does not support message templates"
-    # Evolution não suporta envio de templates, retorna nil
-    nil
   end
 end
