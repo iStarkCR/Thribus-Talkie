@@ -197,17 +197,19 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
 
     if connect_response.success?
       data = connect_response.parsed_response
-      # Se a resposta de conexão já trouxer o QR code (comum na v2), usamos ela
-      # Na v2, o base64 pode vir em data['base64'] ou data['code']
       qr_code = data['base64'] || data['code'] || data.dig('qrcode', 'base64')
       if qr_code.present?
         Rails.logger.info "[EVOLUTION] QR code found in connect response"
         update_connection_state(data, fetch_qr: true)
         return true
       end
+    elsif connect_response.code == 404
+      # Se a instância não existe, tenta criá-la novamente
+      Rails.logger.info "[EVOLUTION] Instance not found (404), attempting to recreate..."
+      return setup_channel_provider
     end
 
-    # Fallback: Busca o estado da conexão se o connect não retornou o QR diretamente
+    # Fallback: Busca o estado da conexão
     qr_response = HTTParty.get(
       "#{provider_url}/instance/connectionState/#{instance_name}",
       headers: api_headers
