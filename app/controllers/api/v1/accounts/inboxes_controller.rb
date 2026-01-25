@@ -83,10 +83,21 @@ class Api::V1::Accounts::InboxesController < Api::V1::Accounts::BaseController #
       render json: { error: 'Channel does not support QR code fetching' }, status: :unprocessable_entity and return
     end
 
-    if channel.fetch_qr_code
-      render json: { message: 'QR code fetch initiated' }, status: :ok
+    # Força a busca do QR code
+    channel.fetch_qr_code
+    
+    # Recarrega o canal para garantir que temos os dados mais recentes do banco
+    channel.reload
+    
+    qr_code = channel.provider_config['qr_data_url']
+
+    if qr_code.present?
+      render json: { 
+        message: 'QR code fetched successfully',
+        qr_code: qr_code
+      }, status: :ok
     else
-      render json: { error: 'Failed to fetch QR code' }, status: :unprocessable_entity
+      render json: { error: 'QR code not available yet, please try again in a few seconds' }, status: :accepted
     end
   end
 
