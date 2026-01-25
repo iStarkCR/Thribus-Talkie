@@ -60,8 +60,9 @@ export const conversationListPageURL = ({
 
 export const isValidURL = value => {
   /* eslint-disable no-useless-escape */
+  // Permite URLs normais, localhost, IPs e nomes de serviços Docker (com ou sem porta)
   const URL_REGEX =
-    /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/gm;
+    /^https?:\/\/([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+(:[0-9]+)?(\/.*)?$/;
   return URL_REGEX.test(value);
 };
 
