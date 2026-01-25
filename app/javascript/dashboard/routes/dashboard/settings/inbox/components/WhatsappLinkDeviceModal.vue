@@ -24,11 +24,32 @@ const qrDataUrl = computed(() => providerConnection.value?.qr_data_url);
 const error = computed(() => providerConnection.value?.error);
 
 const loading = ref(false);
+const pollingTimer = ref(null);
 
 const handleError = e => {
   useAlert(e.message);
   loading.value = false;
 };
+
+const startPolling = () => {
+  if (pollingTimer.value) return;
+  
+  pollingTimer.value = setInterval(() => {
+    if (props.show && !qrDataUrl.value && connection.value === 'connecting') {
+      store.dispatch('inboxes/fetchQrCode', props.inbox.id).catch(() => {});
+    } else if (qrDataUrl.value || connection.value === 'open') {
+      stopPolling();
+    }
+  }, 5000);
+};
+
+const stopPolling = () => {
+  if (pollingTimer.value) {
+    clearInterval(pollingTimer.value);
+    pollingTimer.value = null;
+  }
+};
+
 const setup = () => {
   loading.value = true;
   // Se já temos um instance_id, apenas buscamos o QR code
@@ -39,6 +60,9 @@ const setup = () => {
     
   store
     .dispatch(action, props.inbox.id)
+    .then(() => {
+      startPolling();
+    })
     .catch(handleError);
 };
 const disconnect = () => {
@@ -53,6 +77,7 @@ onMounted(() => {
   // O usuário deve clicar no botão para iniciar a conexão e ver o QR code
 });
 onUnmounted(() => {
+  stopPolling();
   if (
     connection.value === 'connecting' ||
     connection.value === 'reconnecting'
