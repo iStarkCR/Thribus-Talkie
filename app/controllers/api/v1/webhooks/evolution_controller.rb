@@ -10,8 +10,6 @@ class Api::V1::Webhooks::EvolutionController < ApplicationController
   before_action :skip_current_user_check
 
   def create
-    Rails.logger.info "[EVOLUTION WEBHOOK] Received webhook: #{params.to_json}"
-    
     # Converte params para hash para evitar problemas com ActionController::Parameters
     payload = params.to_unsafe_h
     event_type = payload['event']
@@ -23,38 +21,34 @@ class Api::V1::Webhooks::EvolutionController < ApplicationController
                     payload['instance']
     
     unless instance_name.present?
-      Rails.logger.error "[EVOLUTION WEBHOOK] Missing instance name"
-      return render json: { error: 'Missing instance name' }, status: :bad_request
+      return render json: { error: 'Missing instance name' }, status: :ok
     end
 
     # Encontra o canal WhatsApp baseado no nome da instância
     channel = find_channel_by_instance_name(instance_name)
     
     unless channel
-      Rails.logger.warn "[EVOLUTION WEBHOOK] Channel not found for instance: #{instance_name}"
-      return render json: { error: 'Channel not found' }, status: :not_found
+      return render json: { error: 'Channel not found' }, status: :ok
     end
 
-    case event_type
-    when 'QRCODE_UPDATED'
-      handle_qrcode_updated(channel, params)
-    when 'CONNECTION_UPDATE'
-      handle_connection_update(channel, params)
-    when 'MESSAGES_UPSERT'
-      handle_messages_upsert(channel, params)
-    when 'MESSAGES_UPDATE'
-      handle_messages_update(channel, params)
-    when 'SEND_MESSAGE'
-      handle_send_message(channel, params)
-    else
-      Rails.logger.info "[EVOLUTION WEBHOOK] Unhandled event type: #{event_type}"
+    begin
+      case event_type
+      when 'QRCODE_UPDATED'
+        handle_qrcode_updated(channel, params)
+      when 'CONNECTION_UPDATE'
+        handle_connection_update(channel, params)
+      when 'MESSAGES_UPSERT'
+        handle_messages_upsert(channel, params)
+      when 'MESSAGES_UPDATE'
+        handle_messages_update(channel, params)
+      when 'SEND_MESSAGE'
+        handle_send_message(channel, params)
+      end
+    rescue StandardError => e
+      Rails.logger.error "[EVOLUTION WEBHOOK] Error processing: #{e.message}"
     end
 
     render json: { status: 'success' }, status: :ok
-  rescue StandardError => e
-    Rails.logger.error "[EVOLUTION WEBHOOK] Error processing webhook: #{e.class} - #{e.message}"
-    Rails.logger.error e.backtrace.join("\n")
-    render json: { error: e.message }, status: :internal_server_error
   end
 
   private
