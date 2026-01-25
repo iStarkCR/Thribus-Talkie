@@ -30,6 +30,11 @@ class Whatsapp::EvolutionWebhookService
     qr_code = extract_qr_code
     
     if qr_code.present?
+      # Garante que o QR code esteja no formato data:image/png;base64,
+      unless qr_code.start_with?('data:image')
+        qr_code = "data:image/png;base64,#{qr_code}"
+      end
+
       # Usa update_columns para evitar validações que travam o salvamento
       @channel.update_columns(
         provider_config: @channel.provider_config.merge({
