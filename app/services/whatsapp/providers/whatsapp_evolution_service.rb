@@ -51,10 +51,36 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
       update_connection_state(data)
       return true
     elsif response.code == 403 || response.code == 409 || (response.parsed_response.is_a?(Hash) && response.parsed_response['message']&.include?('already exists'))
-      # Se a instância já existe, busca o estado atual (QR Code ou Conectado)
-      Rails.logger.info "[EVOLUTION] Instance already exists, fetching current state"
+      # Se a instância já existe, configura webhook e tenta conectar
+      Rails.logger.info "[EVOLUTION] Instance already exists, checking connection state"
       setup_webhook(webhook_url)
-      return fetch_connection_state
+
+      # Busca o estado atual para verificar se está conectado ou desconectado
+      state_response = HTTParty.get(
+        "#{provider_url}/instance/connectionState/#{instance_name}",
+        headers: api_headers
+      )
+
+      if state_response.success?
+        state_data = state_response.parsed_response
+        instance_data = state_data['instance'] || state_data
+        raw_status = instance_data['state'] || instance_data['status'] || 'close'
+
+        Rails.logger.info "[EVOLUTION] Current instance status: #{raw_status}"
+
+        # Se está desconectado, chama connect para gerar QR code
+        if raw_status.to_s.downcase == 'close'
+          Rails.logger.info "[EVOLUTION] Instance is disconnected, initiating connection to generate QR code"
+          return fetch_qr_code
+        else
+          # Se já está conectado ou conectando, apenas atualiza o estado
+          update_connection_state(state_data)
+          return true
+        end
+      end
+
+      # Fallback: se não conseguir buscar o estado, tenta gerar QR code
+      return fetch_qr_code
     end
 
     error_message = response.parsed_response.is_a?(Hash) ? response.parsed_response['message'] : response.body
