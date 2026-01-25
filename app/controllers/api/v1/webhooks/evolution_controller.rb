@@ -15,10 +15,19 @@ class Api::V1::Webhooks::EvolutionController < ApplicationController
     event_type = payload['event']
     
     # Tenta extrair o nome da instância de várias formas comuns na Evolution v2
-    instance_name = payload.dig('instance', 'instanceName') || 
-                    payload.dig('data', 'instance') || 
-                    payload['instanceName'] || 
-                    payload['instance']
+    # Usamos verificações seguras para evitar TypeError se 'instance' ou 'data' forem Strings
+    instance_name = nil
+    
+    if payload['instance'].is_a?(Hash)
+      instance_name ||= payload.dig('instance', 'instanceName')
+    end
+    
+    if payload['data'].is_a?(Hash)
+      instance_name ||= payload.dig('data', 'instance')
+    end
+    
+    instance_name ||= payload['instanceName']
+    instance_name ||= payload['instance'] if payload['instance'].is_a?(String)
     
     unless instance_name.present?
       return render json: { error: 'Missing instance name' }, status: :ok
