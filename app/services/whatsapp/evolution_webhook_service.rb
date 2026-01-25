@@ -64,6 +64,21 @@ class Whatsapp::EvolutionWebhookService
         updated_at: Time.now.to_i
       })
       
+      # Verifica se tem QR Code no payload (Evolution v2 envia QR code junto com connection.update)
+      qr_code = extract_qr_code
+      if qr_code.present? && state == 'connecting'
+        # Garante que o QR code esteja no formato data:image/png;base64,
+        unless qr_code.start_with?('data:image')
+          qr_code = "data:image/png;base64,#{qr_code}"
+        end
+        new_config[:qr_data_url] = qr_code
+        
+        # Notifica via ActionCable
+        notify_qrcode_update(qr_code)
+        
+        Rails.logger.info "[EVOLUTION WEBHOOK SERVICE] QR Code extracted from CONNECTION_UPDATE event"
+      end
+      
       # Se conectado, limpa o QR code
       new_config[:qr_data_url] = nil if state == 'open'
       
