@@ -9,13 +9,16 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   DEFAULT_API_KEY = ENV.fetch('BAILEYS_PROVIDER_DEFAULT_API_KEY', nil)
 
   def self.status
-    if DEFAULT_URL.blank? || DEFAULT_API_KEY.blank?
-      raise ProviderUnavailableError, 'Missing BAILEYS_PROVIDER_DEFAULT_URL or BAILEYS_PROVIDER_DEFAULT_API_KEY setup'
+    if DEFAULT_URL.blank?
+      raise ProviderUnavailableError, 'Missing BAILEYS_PROVIDER_DEFAULT_URL setup'
     end
+
+    headers = {}
+    headers['x-api-key'] = DEFAULT_API_KEY if DEFAULT_API_KEY.present?
 
     response = HTTParty.get(
       "#{DEFAULT_URL}/status",
-      headers: { 'x-api-key' => DEFAULT_API_KEY }
+      headers: headers
     )
 
     unless response.success?
