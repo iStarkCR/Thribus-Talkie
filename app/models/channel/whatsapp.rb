@@ -165,7 +165,15 @@ class Channel::Whatsapp < ApplicationRecord
     provider_config['webhook_verify_token'] ||= SecureRandom.hex(16) if provider.in?(%w[whatsapp_cloud baileys])
   end
 
+  def ensure_baileys_config
+    return unless provider == 'baileys'
+
+    provider_config['provider_url'] ||= ENV.fetch('BAILEYS_PROVIDER_DEFAULT_URL', nil)
+    provider_config['api_key'] ||= ENV.fetch('BAILEYS_PROVIDER_DEFAULT_API_KEY', nil)
+  end
+
   def validate_provider_config
+    ensure_baileys_config if provider == 'baileys'
     errors.add(:provider_config, 'Invalid Credentials') unless provider_service.validate_provider_config?
   end
 
