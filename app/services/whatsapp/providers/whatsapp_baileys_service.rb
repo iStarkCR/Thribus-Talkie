@@ -87,7 +87,9 @@ class Whatsapp::Providers::WhatsappBaileysService < Whatsapp::Providers::BaseSer
   end
 
   def api_headers
-    { 'x-api-key' => api_key, 'Content-Type' => 'application/json' }
+    headers = { 'Content-Type' => 'application/json' }
+    headers['x-api-key'] = api_key if api_key.present?
+    headers
   end
 
   def validate_provider_config?
