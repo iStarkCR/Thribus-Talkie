@@ -259,12 +259,15 @@ class Whatsapp::Providers::WhatsappEvolutionService < Whatsapp::Providers::BaseS
     Rails.logger.info "[EVOLUTION] Instance ID: #{instance_id}"
     Rails.logger.info "[EVOLUTION] QR Code present: #{qr_code.present?}"
 
-    whatsapp_channel.update_provider_connection!({
-      connection: connection_status,
-      instance_id: instance_id,
-      qr_data_url: qr_code,
-      updated_at: Time.now.to_i
-    })
+    # Usa update_columns para evitar validações que travam o salvamento (como Inbox can't be blank)
+    whatsapp_channel.update_columns(
+      provider_config: whatsapp_channel.provider_config.merge({
+        connection: connection_status,
+        instance_id: instance_id,
+        qr_data_url: qr_code,
+        updated_at: Time.now.to_i
+      })
+    )
   end
 
   def setup_webhook(webhook_url)

@@ -30,11 +30,14 @@ class Whatsapp::EvolutionWebhookService
     qr_code = extract_qr_code
     
     if qr_code.present?
-      @channel.update_provider_connection!({
-        connection: 'connecting',
-        qr_data_url: qr_code,
-        updated_at: Time.now.to_i
-      })
+      # Usa update_columns para evitar validações que travam o salvamento
+      @channel.update_columns(
+        provider_config: @channel.provider_config.merge({
+          connection: 'connecting',
+          qr_data_url: qr_code,
+          updated_at: Time.now.to_i
+        })
+      )
       
       # Notifica via ActionCable se necessário
       notify_qrcode_update(qr_code)
@@ -51,15 +54,15 @@ class Whatsapp::EvolutionWebhookService
     state = extract_connection_state
     
     if state.present?
-      connection_data = {
+      new_config = @channel.provider_config.merge({
         connection: state,
         updated_at: Time.now.to_i
-      }
+      })
       
       # Se conectado, limpa o QR code
-      connection_data[:qr_data_url] = nil if state == 'open'
+      new_config[:qr_data_url] = nil if state == 'open'
       
-      @channel.update_provider_connection!(connection_data)
+      @channel.update_columns(provider_config: new_config)
       
       # Notifica via ActionCable
       notify_connection_update(state)
