@@ -237,19 +237,15 @@
           "WHATSAPP_CLOUD_DESC": "Quick setup through Meta",
           "TWILIO_DESC": "Connect via Twilio credentials",
           "360_DIALOG": "360Dialog",
-          "BAILEYS": "Baileys",
-          "BAILEYS_DESC": "Connect via non-official API Baileys",
           "ZAPI": "Z-API",
-          "ZAPI_DESC": "Connect via non-official API Z-API",
-          "EVOLUTION": "Evolution API",
-          "EVOLUTION_DESC": "Connect via Evolution API (Direct QR Code)"
+          "ZAPI_DESC": "Connect via non-official API Z-API"
         },
         "SELECT_PROVIDER": {
           "TITLE": "Select your API provider",
           "DESCRIPTION": "Choose your WhatsApp provider. You can connect directly through Meta which requires no setup, or connect through Twilio using your account credentials.",
           "ZAPI_PROMO": {
             "TITLE": "Looking for a reliable WhatsApp solution?",
-            "DESCRIPTION": "Z-API offers superior stability compared to Baileys and is much simpler to set up than Cloud or Twilio - no complex configuration required. Perfect for businesses that want to get started quickly.",
+            "DESCRIPTION": "Z-API offers superior stability and is much simpler to set up than Cloud or Twilio - no complex configuration required. Perfect for businesses that want to get started quickly.",
             "CTA": "Use Z-API"
           }
         },
@@ -359,7 +355,7 @@
         "ZAPI_PROMO": {
           "SWITCH_BANNER": {
             "TITLE": "Consider switching to Z-API for easier setup",
-            "DESCRIPTION": "Z-API provides a more stable connection than Baileys and requires less configuration than Cloud/Twilio. Switch to a hassle-free WhatsApp integration.",
+            "DESCRIPTION": "Z-API provides a stable connection and requires less configuration than Cloud/Twilio. Switch to a hassle-free WhatsApp integration.",
             "CTA": "Switch to Z-API"
           },
           "SETUP_BANNER": {
@@ -1126,9 +1122,7 @@
       "TWITTER_PROFILE": "Twitter",
       "TWILIO_SMS": "Twilio SMS",
       "WHATSAPP": "WhatsApp",
-      "WHATSAPP_BAILEYS": "WhatsApp - Baileys",
       "WHATSAPP_ZAPI": "WhatsApp - Z-API",
-      "WHATSAPP_EVOLUTION": "WhatsApp - Evolution API",
       "SMS": "SMS",
       "EMAIL": "Email",
       "TELEGRAM": "Telegram",

@@ -33,9 +33,7 @@ const showLinkDeviceModal = reactive({
 // Use useInbox composable with the inbox ID
   const {
   isAWhatsAppCloudChannel,
-  isAWhatsAppBaileysChannel,
   isAWhatsAppZapiChannel,
-  isAWhatsAppEvolutionChannel,
   isATwilioChannel,
   isASmsInbox,
   isALineChannel,
@@ -95,7 +93,7 @@ const message = computed(() => {
     )}`;
   }
 
-  if (isAWhatsAppBaileysChannel.value || isAWhatsAppZapiChannel.value) {
+  if (isAWhatsAppZapiChannel.value) {
     return `${t('INBOX_MGMT.FINISH.MESSAGE')}. ${t(
       'INBOX_MGMT.ADD.WHATSAPP.EXTERNAL_PROVIDER.SUBTITLE'
     )}`;
@@ -237,7 +235,7 @@ onMounted(() => {
           />
         </div>
         <div
-          v-if="isAWhatsAppBaileysChannel || isAWhatsAppZapiChannel || isAWhatsAppEvolutionChannel"
+          v-if="isAWhatsAppZapiChannel"
           class="w-[50%] max-w-[50%] ml-[25%]"
         >
           <NextButton @click="onOpenLinkDeviceModal">
@@ -266,10 +264,8 @@ onMounted(() => {
         <div
           v-if="
             isAWhatsAppChannel &&
-            !isAWhatsAppBaileysChannel &&
             !isAWhatsAppZapiChannel &&
             !isAWhatsAppCloudChannel &&
-            !isAWhatsAppEvolutionChannel &&
             qrCodes.whatsapp
           "
           class="flex flex-col gap-3 items-center mt-8"

@@ -27,7 +27,7 @@ class Channel::Whatsapp < ApplicationRecord
   EDITABLE_ATTRS = [:phone_number, :provider, { provider_config: {} }].freeze
 
   # default at the moment is 360dialog lets change later.
-  PROVIDERS = %w[default whatsapp_cloud baileys zapi evolution].freeze
+  PROVIDERS = %w[default whatsapp_cloud zapi].freeze
   before_validation :ensure_webhook_verify_token
 
   validates :provider, inclusion: { in: PROVIDERS }
@@ -37,9 +37,7 @@ class Channel::Whatsapp < ApplicationRecord
   has_one :inbox, as: :channel, dependent: :destroy
 
   after_create :sync_templates
-  # Para o provider 'evolution', não queremos criar a instância automaticamente no after_create
-  # pois o usuário deve clicar no botão "Vincular Dispositivo" para gerar o QR Code sob demanda.
-  after_commit :setup_channel_provider_if_supported, on: :create, unless: -> { provider == 'evolution' }
+  after_commit :setup_channel_provider_if_supported, on: :create
   before_destroy :teardown_webhooks
 
   before_destroy :disconnect_channel_provider, if: -> { provider_service.respond_to?(:disconnect_channel_provider) }
@@ -52,19 +50,15 @@ class Channel::Whatsapp < ApplicationRecord
     case provider
     when 'whatsapp_cloud'
       Whatsapp::Providers::WhatsappCloudService.new(whatsapp_channel: self)
-    when 'baileys'
-      Whatsapp::Providers::WhatsappBaileysService.new(whatsapp_channel: self)
     when 'zapi'
       Whatsapp::Providers::WhatsappZapiService.new(whatsapp_channel: self)
-    when 'evolution'
-      Whatsapp::Providers::WhatsappEvolutionService.new(whatsapp_channel: self)
     else
       Whatsapp::Providers::Whatsapp360DialogService.new(whatsapp_channel: self)
     end
   end
 
   def use_internal_host?
-    provider == 'baileys' && ENV.fetch('BAILEYS_PROVIDER_USE_INTERNAL_HOST_URL', false)
+    false
   end
 
   def mark_message_templates_updated
@@ -119,7 +113,6 @@ class Channel::Whatsapp < ApplicationRecord
   def unread_conversation(conversation)
     return unless provider_service.respond_to?(:unread_message)
 
-    # NOTE: For the Baileys provider, the last message is required even if it is an outgoing message.
     last_message = conversation.messages.last
     provider_service.unread_message(conversation.contact.phone_number, last_message) if last_message
   end
@@ -162,18 +155,10 @@ class Channel::Whatsapp < ApplicationRecord
   private
 
   def ensure_webhook_verify_token
-    provider_config['webhook_verify_token'] ||= SecureRandom.hex(16) if provider.in?(%w[whatsapp_cloud baileys])
-  end
-
-  def ensure_baileys_config
-    return unless provider == 'baileys'
-
-    provider_config['provider_url'] ||= ENV.fetch('BAILEYS_PROVIDER_DEFAULT_URL', nil)
-    provider_config['api_key'] ||= ENV.fetch('BAILEYS_PROVIDER_DEFAULT_API_KEY', nil)
+    provider_config['webhook_verify_token'] ||= SecureRandom.hex(16) if provider == 'whatsapp_cloud'
   end
 
   def validate_provider_config
-    ensure_baileys_config if provider == 'baileys'
     errors.add(:provider_config, 'Invalid Credentials') unless provider_service.validate_provider_config?
   end
 

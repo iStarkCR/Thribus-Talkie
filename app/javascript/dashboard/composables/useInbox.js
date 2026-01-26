@@ -119,24 +119,10 @@ export const useInbox = (inboxId = null) => {
     );
   });
 
-  const isAWhatsAppBaileysChannel = computed(() => {
-    return (
-      channelType.value === INBOX_TYPES.WHATSAPP &&
-      whatsAppAPIProvider.value === 'baileys'
-    );
-  });
-
   const isAWhatsAppZapiChannel = computed(() => {
     return (
       channelType.value === INBOX_TYPES.WHATSAPP &&
       whatsAppAPIProvider.value === 'zapi'
-    );
-  });
-
-  const isAWhatsAppEvolutionChannel = computed(() => {
-    return (
-      channelType.value === INBOX_TYPES.WHATSAPP &&
-      whatsAppAPIProvider.value === 'evolution'
     );
   });
 
@@ -174,9 +160,7 @@ export const useInbox = (inboxId = null) => {
     isATwilioWhatsAppChannel,
     isAWhatsAppCloudChannel,
     is360DialogWhatsAppChannel,
-    isAWhatsAppBaileysChannel,
     isAWhatsAppZapiChannel,
-    isAWhatsAppEvolutionChannel,
     isAnEmailChannel,
     isAnInstagramChannel,
     isATiktokChannel,

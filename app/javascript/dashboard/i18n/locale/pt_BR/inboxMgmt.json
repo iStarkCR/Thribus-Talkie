@@ -237,12 +237,8 @@
           "WHATSAPP_CLOUD_DESC": "Configuração rápida via Meta",
           "TWILIO_DESC": "Conectar via credenciais Twilio",
           "360_DIALOG": "360Dialog",
-          "BAILEYS": "Baileys",
-          "BAILEYS_DESC": "Conectar via API não oficial Baileys",
           "ZAPI": "Z-API",
-          "ZAPI_DESC": "Conectar via API não oficial Z-API",
-          "EVOLUTION": "Evolution API",
-          "EVOLUTION_DESC": "Conectar via Evolution API (QR Code Direto)"
+          "ZAPI_DESC": "Conectar via API não oficial Z-API"
         },
         "EXTERNAL_PROVIDER": {
           "SUBTITLE": "Clique abaixo para configurar o canal do WhatsApp.",
@@ -262,7 +258,7 @@
           "DESCRIPTION": "Escolha seu provedor do WhatsApp. Você pode se conectar diretamente através de metade, que não requer nenhuma configuração ou se conectar pelo Twilio usando as credenciais da sua conta.",
           "ZAPI_PROMO": {
             "TITLE": "Procurando uma solução WhatsApp confiável?",
-            "DESCRIPTION": "Z-API oferece estabilidade superior comparado ao Baileys e é muito mais simples de configurar que Cloud ou Twilio - sem necessidade de configuração complexa. Perfeito para empresas que querem começar rapidamente.",
+            "DESCRIPTION": "Z-API oferece estabilidade superior e é muito mais simples de configurar que Cloud ou Twilio - sem necessidade de configuração complexa. Perfeito para empresas que querem começar rapidamente.",
             "CTA": "Usar Z-API"
           }
         },
@@ -372,7 +368,7 @@
         "ZAPI_PROMO": {
           "SWITCH_BANNER": {
             "TITLE": "Considere mudar para Z-API para configuração mais fácil",
-            "DESCRIPTION": "Z-API fornece uma conexão mais estável que Baileys e requer menos configuração que Cloud/Twilio. Mude para uma integração WhatsApp sem complicações.",
+            "DESCRIPTION": "Z-API fornece uma conexão estável e requer menos configuração que Cloud/Twilio. Mude para uma integração WhatsApp sem complicações.",
             "CTA": "Mudar para Z-API"
           },
           "SETUP_BANNER": {
@@ -1139,9 +1135,7 @@
       "TWITTER_PROFILE": "Twitter",
       "TWILIO_SMS": "SMS Twilio",
       "WHATSAPP": "WhatsApp",
-      "WHATSAPP_BAILEYS": "WhatsApp - Baileys",
       "WHATSAPP_ZAPI": "WhatsApp - Z-API",
-      "WHATSAPP_EVOLUTION": "WhatsApp - Evolution API",
       "SMS": "SMS",
       "EMAIL": "e-mail",
       "TELEGRAM": "Telegram",
