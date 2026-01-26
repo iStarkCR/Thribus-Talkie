@@ -45,6 +45,7 @@ export default {
       isSyncingTemplates: false,
       allowedDomains: '',
       isUpdatingAllowedDomains: false,
+
       showLinkDeviceModal: false,
       markAsRead: true,
       zapiInstanceId: '',
@@ -59,9 +60,10 @@ export default {
     return {
       whatsAppInboxAPIKey: {
         requiredIf: requiredIf(
-          !this.isAWhatsAppBaileysChannel && !this.isAWhatsAppZapiChannel
+          !this.isAWhatsAppZapiChannel
         ),
       },
+
       zapiInstanceIdUpdate: {},
       zapiTokenUpdate: {},
       zapiClientTokenUpdate: {},
@@ -90,6 +92,7 @@ export default {
     setDefaults() {
       this.hmacMandatory = this.inbox.hmac_mandatory || false;
       this.allowedDomains = this.inbox.allowed_domains || '';
+
       this.markAsRead = this.inbox.provider_config?.mark_as_read ?? true;
       this.zapiInstanceId = this.inbox.provider_config?.instance_id ?? '';
       this.zapiToken = this.inbox.provider_config?.token ?? '';
@@ -172,24 +175,7 @@ export default {
         this.isSyncingTemplates = false;
       }
     },
-    async updateBaileysProviderUrl() {
-      try {
-        const payload = {
-          id: this.inbox.id,
-          formData: false,
-          channel: {
-            provider_config: {
-              ...this.inbox.provider_config,
-            },
-          },
-        };
 
-        await this.$store.dispatch('inboxes/updateInbox', payload);
-        useAlert(this.$t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
-      } catch (error) {
-        useAlert(this.$t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
-      }
-    },
     async updateWhatsAppMarkAsRead() {
       try {
         const payload = {
@@ -546,129 +532,7 @@ export default {
       class="hidden"
     />
   </div>
-  <div v-else-if="isAWhatsAppBaileysChannel">
-    <WhatsappLinkDeviceModal
-      v-if="showLinkDeviceModal"
-      :show="showLinkDeviceModal"
-      :on-close="onCloseLinkDeviceModal"
-      :inbox="inbox"
-    />
-    <div class="mx-8">
-      <SettingsSection
-        :title="
-          $t(
-            'INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_MANAGE_PROVIDER_CONNECTION_TITLE'
-          )
-        "
-        :sub-title="
-          $t(
-            'INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_MANAGE_PROVIDER_CONNECTION_SUBHEADER'
-          )
-        "
-      >
-        <div class="flex flex-col gap-2">
-          <InboxName
-            :inbox="inbox"
-            class="!text-lg !m-0"
-            with-phone-number
-            with-provider-connection-status
-          />
-          <NextButton class="w-fit" @click="onOpenLinkDeviceModal">
-            {{
-              $t(
-                'INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_MANAGE_PROVIDER_CONNECTION_BUTTON'
-              )
-            }}
-          </NextButton>
-        </div>
-      </SettingsSection>
-      <SettingsSection
-        :title="$t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_PROVIDER_URL_TITLE')"
-        :sub-title="
-          $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_PROVIDER_URL_SUBHEADER')
-        "
-      >
-        <div
-          class="flex items-center justify-between flex-1 mt-2 whatsapp-settings--content"
-        >
-          <woot-input
-            type="text"
-            class="flex-1 mr-2 items-center"
-            :placeholder="
-              $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_PROVIDER_URL_PLACEHOLDER')
-            "
-          />
-          <NextButton
-            :disabled="
-            "
-            @click="updateBaileysProviderUrl"
-          >
-            {{ $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_UPDATE_BUTTON') }}
-          </NextButton>
-        </div>
-          {{ $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_PROVIDER_URL_ERROR') }}
-        </span>
-      </SettingsSection>
-      <template v-if="inbox.provider_config.api_key">
-        <SettingsSection
-          :title="$t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_TITLE')"
-          :sub-title="
-            $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_SUBHEADER')
-          "
-        >
-          <woot-code :script="inbox.provider_config.api_key" />
-        </SettingsSection>
-      </template>
-      <SettingsSection
-        :title="$t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_UPDATE_TITLE')"
-        :sub-title="
-          $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_UPDATE_SUBHEADER')
-        "
-      >
-        <div
-          class="flex items-center justify-between flex-1 mt-2 whatsapp-settings--content"
-        >
-          <woot-input
-            v-model="whatsAppInboxAPIKey"
-            type="text"
-            class="flex-1 mr-2"
-            :placeholder="
-              $t(
-                'INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_UPDATE_PLACEHOLDER'
-              )
-            "
-          />
-          <NextButton
-            :disabled="
-              v$.whatsAppInboxAPIKey.$invalid ||
-              (!inbox.provider_config.api_key && !whatsAppInboxAPIKey) ||
-              whatsAppInboxAPIKey === inbox.provider_config.api_key
-            "
-            @click="updateWhatsAppInboxAPIKey"
-          >
-            {{ $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_UPDATE_BUTTON') }}
-          </NextButton>
-        </div>
-      </SettingsSection>
-      <SettingsSection
-        :title="$t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_MARK_AS_READ_TITLE')"
-        :sub-title="
-          $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_MARK_AS_READ_SUBHEADER')
-        "
-      >
-        <div class="flex items-center gap-2">
-          <Switch
-            id="markAsRead"
-            v-model="markAsRead"
-            @change="updateWhatsAppMarkAsRead"
-          />
-          <label for="markAsRead">
-            {{ $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_MARK_AS_READ_LABEL') }}
-          </label>
-        </div>
-      </SettingsSection>
-    </div>
-  </div>
+
   <div v-else-if="isAWhatsAppZapiChannel">
     <WhatsappLinkDeviceModal
       v-if="showLinkDeviceModal"

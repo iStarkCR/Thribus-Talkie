@@ -91,11 +91,7 @@ export default {
         this.whatsAppAPIProvider === 'default'
       );
     },
-    isAWhatsAppBaileysChannel() {
-      return (
-        this.channelType === INBOX_TYPES.WHATSAPP &&
-      );
-    },
+
     isAWhatsAppZapiChannel() {
       return (
         this.channelType === INBOX_TYPES.WHATSAPP &&
