@@ -7,9 +7,7 @@ import ThreeSixtyDialogWhatsapp from './360DialogWhatsapp.vue';
 import CloudWhatsapp from './CloudWhatsapp.vue';
 import WhatsappEmbeddedSignup from './WhatsappEmbeddedSignup.vue';
 import ChannelSelector from 'dashboard/components/ChannelSelector.vue';
-import BaileysWhatsapp from './BaileysWhatsapp.vue';
 import ZapiWhatsapp from './ZapiWhatsapp.vue';
-import EvolutionWhatsapp from './EvolutionWhatsapp.vue';
 import PromoBanner from 'dashboard/components-next/banner/PromoBanner.vue';
 
 const route = useRoute();
@@ -23,9 +21,7 @@ const PROVIDER_TYPES = {
   WHATSAPP_EMBEDDED: 'whatsapp_embedded',
   WHATSAPP_MANUAL: 'whatsapp_manual',
   THREE_SIXTY_DIALOG: '360dialog',
-  BAILEYS: 'baileys',
   ZAPI: 'zapi',
-  EVOLUTION: 'evolution',
 };
 
 const hasWhatsappAppId = computed(() => {
@@ -56,23 +52,11 @@ const availableProviders = computed(() => {
       icon: 'i-woot-twilio',
     },
     {
-      key: PROVIDER_TYPES.BAILEYS,
-      title: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.BAILEYS'),
-      description: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.BAILEYS_DESC'),
-      icon: 'i-woot-baileys',
+      key: PROVIDER_TYPES.ZAPI,
+      title: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.ZAPI'),
+      description: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.ZAPI_DESC'),
+      icon: 'i-woot-zapi',
     },
-      {
-        key: PROVIDER_TYPES.ZAPI,
-        title: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.ZAPI'),
-        description: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.ZAPI_DESC'),
-        icon: 'i-woot-zapi',
-      },
-      {
-        key: PROVIDER_TYPES.EVOLUTION,
-        title: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.EVOLUTION'),
-        description: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.EVOLUTION_DESC'),
-        icon: 'i-woot-whatsapp',
-      },
     ];
 
   return providers;
@@ -193,13 +177,7 @@ const handleManualLinkClick = () => {
         <CloudWhatsapp
           v-else-if="selectedProvider === PROVIDER_TYPES.WHATSAPP"
         />
-        <BaileysWhatsapp
-          v-else-if="selectedProvider === PROVIDER_TYPES.BAILEYS"
-        />
         <ZapiWhatsapp v-else-if="selectedProvider === PROVIDER_TYPES.ZAPI" />
-        <EvolutionWhatsapp
-          v-else-if="selectedProvider === PROVIDER_TYPES.EVOLUTION"
-        />
       </div>
     </div>
   </div>

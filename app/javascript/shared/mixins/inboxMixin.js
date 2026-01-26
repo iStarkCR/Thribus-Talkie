@@ -94,7 +94,6 @@ export default {
     isAWhatsAppBaileysChannel() {
       return (
         this.channelType === INBOX_TYPES.WHATSAPP &&
-        this.whatsAppAPIProvider === 'baileys'
       );
     },
     isAWhatsAppZapiChannel() {

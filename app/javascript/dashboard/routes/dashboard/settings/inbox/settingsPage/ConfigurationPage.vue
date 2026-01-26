@@ -45,7 +45,6 @@ export default {
       isSyncingTemplates: false,
       allowedDomains: '',
       isUpdatingAllowedDomains: false,
-      baileysProviderUrl: '',
       showLinkDeviceModal: false,
       markAsRead: true,
       zapiInstanceId: '',
@@ -63,7 +62,6 @@ export default {
           !this.isAWhatsAppBaileysChannel && !this.isAWhatsAppZapiChannel
         ),
       },
-      baileysProviderUrl: { isValidURL: value => !value || isValidURL(value) },
       zapiInstanceIdUpdate: {},
       zapiTokenUpdate: {},
       zapiClientTokenUpdate: {},
@@ -92,7 +90,6 @@ export default {
     setDefaults() {
       this.hmacMandatory = this.inbox.hmac_mandatory || false;
       this.allowedDomains = this.inbox.allowed_domains || '';
-      this.baileysProviderUrl = this.inbox.provider_config?.provider_url ?? '';
       this.markAsRead = this.inbox.provider_config?.mark_as_read ?? true;
       this.zapiInstanceId = this.inbox.provider_config?.instance_id ?? '';
       this.zapiToken = this.inbox.provider_config?.token ?? '';
@@ -183,7 +180,6 @@ export default {
           channel: {
             provider_config: {
               ...this.inbox.provider_config,
-              provider_url: this.baileysProviderUrl,
             },
           },
         };
@@ -596,25 +592,20 @@ export default {
           class="flex items-center justify-between flex-1 mt-2 whatsapp-settings--content"
         >
           <woot-input
-            v-model="baileysProviderUrl"
             type="text"
             class="flex-1 mr-2 items-center"
             :placeholder="
               $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_PROVIDER_URL_PLACEHOLDER')
             "
-            @keydown="v$.baileysProviderUrl.$touch"
           />
           <NextButton
             :disabled="
-              v$.baileysProviderUrl.$invalid ||
-              baileysProviderUrl === inbox.provider_config.provider_url
             "
             @click="updateBaileysProviderUrl"
           >
             {{ $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_SECTION_UPDATE_BUTTON') }}
           </NextButton>
         </div>
-        <span v-if="v$.baileysProviderUrl.$error" class="text-red-400">
           {{ $t('INBOX_MGMT.SETTINGS_POPUP.WHATSAPP_PROVIDER_URL_ERROR') }}
         </span>
       </SettingsSection>

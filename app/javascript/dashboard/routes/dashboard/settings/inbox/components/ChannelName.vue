@@ -45,9 +45,6 @@ const twilioChannelName = () => {
 };
 
 const whatsappChannelName = () => {
-  if (props.provider === 'baileys') {
-    return t(`INBOX_MGMT.CHANNELS.WHATSAPP_BAILEYS`);
-  }
   if (props.provider === 'zapi') {
     return t(`INBOX_MGMT.CHANNELS.WHATSAPP_ZAPI`);
   }
