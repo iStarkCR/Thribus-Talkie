@@ -4,7 +4,7 @@ namespace :branding do
   task update: :environment do
     configurable_items = {
       # The installation wide name that would be used in the dashboard, title etc.
-      'INSTALLATION_NAME' => 'Thribus Talki',
+      'INSTALLATION_NAME' => 'Talki',
       # The thumbnail that would be used for favicon (512px X 512px)
       'LOGO_THUMBNAIL' => '/brand-assets/logo_thumbnail.svg',
       # The logo that would be used on the dashboard, login page etc.
@@ -16,7 +16,7 @@ namespace :branding do
       # The URL that would be used in the widget under the section “Powered By”
       'WIDGET_BRAND_URL' => 'https://www.thribustech.com',
       # The name that would be used in emails and the widget
-      'BRAND_NAME' => 'Thribus Talki',
+      'BRAND_NAME' => 'Talki',
       # The terms of service URL displayed in Signup Page
       'TERMS_URL' => 'https://www.thribustech.com/terms-of-service',
       # The privacy policy URL displayed in the app
