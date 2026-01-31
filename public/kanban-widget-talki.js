@@ -16,7 +16,7 @@
 (function() {
   'use strict';
 
-  const KANBAN_URL = 'https://talki.kanban.thribustech.com';
+  const KANBAN_URL = 'https://kanban.thribustech.com';
 
   var panelOpen = false;
   var menuItemsAdded = false;
@@ -241,8 +241,8 @@
 (function() {
   'use strict';
 
-  const KANBAN_URL = 'https://talki.kanban.thribustech.com';
-  const KANBAN_API_URL = 'https://api.kanban.thribustech.com';
+  const KANBAN_URL = 'https://kanban.thribustech.com';
+  const KANBAN_API_URL = 'https://api-kanban.thribustech.com';
 
   var WIDGET_CONFIG = {
     apiUrl: KANBAN_API_URL
