@@ -1,7 +1,7 @@
 // ============================================================
 // KANBAN WIDGET PARA TALKI - THRIBUS
 // ============================================================
-// Versão: 1.0.1
+// Versão: 1.0.2
 // Data: 2025-01-31
 // Sistema: Talki (baseado em Chatwoot com melhorias)
 // Descrição: Integração completa do Kanban no Talki
@@ -242,9 +242,10 @@
   'use strict';
 
   const KANBAN_URL = 'https://talki.kanban.thribustech.com';
+  const KANBAN_API_URL = 'https://api.kanban.thribustech.com';
 
   var WIDGET_CONFIG = {
-    apiUrl: KANBAN_URL + '/api'
+    apiUrl: KANBAN_API_URL
   };
 
   var currentConversationId = null;
@@ -298,99 +299,32 @@
     console.log('[Kanban Widget] === createHeaderButton iniciado ===');
 
     var existing = document.getElementById('cw-kanban-header-btn');
-    if (existing) {
-      console.log('[Kanban Widget] Botão já existe, retornando true');
-      return true;
-    }
+    if (existing) return true;
 
-    var allButtons = document.querySelectorAll('button');
-    console.log('[Kanban Widget] Total de botões na página: ' + allButtons.length);
-
-    var actionsContainer = null;
-    var siblingBtn = null;
-
-    for (var i = 0; i < allButtons.length; i++) {
-      var btn = allButtons[i];
-      var rect = btn.getBoundingClientRect();
-
-      if (rect.width >= 28 && rect.width <= 40 && rect.height >= 28 && rect.height <= 40 && rect.width > 0) {
-        if (rect.left > window.innerWidth * 0.6) {
-          var parent = btn.parentElement;
-          if (parent) {
-            var siblings = parent.querySelectorAll(':scope > button');
-            if (siblings.length >= 2 && siblings.length <= 6) {
-              console.log('[Kanban Widget] Candidato encontrado! Botões no container: ' + siblings.length + ', posição X: ' + rect.left);
-              actionsContainer = parent;
-              siblingBtn = btn;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    if (!actionsContainer) {
-      console.log('[Kanban Widget] Container não encontrado pelo método de botões');
-
-      var allSpans = document.querySelectorAll('span');
-      for (var j = 0; j < allSpans.length; j++) {
-        if (allSpans[j].textContent.trim() === 'Ações da conversa') {
-          console.log('[Kanban Widget] Encontrou "Ações da conversa", buscando botões acima...');
-          var section = allSpans[j].closest('div');
-          if (section && section.parentElement) {
-            var parentDiv = section.parentElement;
-            var divsAbove = parentDiv.querySelectorAll('div');
-            for (var k = 0; k < divsAbove.length; k++) {
-              var btns = divsAbove[k].querySelectorAll(':scope > button');
-              if (btns.length >= 2 && btns.length <= 6) {
-                var divRect = divsAbove[k].getBoundingClientRect();
-                var sectionRect = section.getBoundingClientRect();
-                if (divRect.bottom < sectionRect.top + 50) {
-                  actionsContainer = divsAbove[k];
-                  siblingBtn = btns[0];
-                  console.log('[Kanban Widget] Container encontrado via fallback com ' + btns.length + ' botões');
-                  break;
-                }
-              }
-            }
-          }
-          break;
-        }
-      }
-    }
-
-    if (!actionsContainer) {
-      console.log('[Kanban Widget] FALHA: Nenhum container encontrado');
+    var header = document.querySelector('header.bg-white, header[class*="bg-white"], .conversation-header');
+    if (!header) {
+      console.log('[Kanban Widget] Header não encontrado');
       return false;
     }
 
-    if (actionsContainer.querySelector('#cw-kanban-header-btn')) {
-      console.log('[Kanban Widget] Botão já existe no container');
-      return true;
+    var actionGroup = header.querySelector('.flex.items-center.gap-1, .flex.items-center.gap-2, .flex.items-center');
+    if (!actionGroup) {
+      console.log('[Kanban Widget] Grupo de ações não encontrado');
+      return false;
     }
 
-    var newBtn = document.createElement('button');
-    newBtn.id = 'cw-kanban-header-btn';
-    newBtn.title = 'Configurações do Kanban';
-
-    if (siblingBtn) {
-      newBtn.className = siblingBtn.className;
-      console.log('[Kanban Widget] Classes copiadas: ' + siblingBtn.className.substring(0, 50) + '...');
-    } else {
-      newBtn.className = 'inline-flex items-center justify-center min-w-0 gap-0.5 transition-all duration-100 ease-out border-0 rounded-lg outline outline-1 outline-transparent disabled:opacity-50 bg-n-slate-9/10 text-n-slate-9/10 hover:enabled:bg-n-slate-9/20 focus-visible:bg-n-slate-9/20 outline-transparent h-8 w-8 p-0 text-sm';
-    }
-
-    newBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>';
-
-    newBtn.onclick = function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      window.openKanbanWidgetModal();
+    var btn = document.createElement('button');
+    btn.id = 'cw-kanban-header-btn';
+    btn.type = 'button';
+    btn.title = 'Configurações do Kanban';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>';
+    btn.onclick = function() {
+      widgetModalState.view = 'main';
+      document.getElementById('cw-kanban-modal-overlay').classList.add('visible');
+      renderWidgetModalContent();
     };
 
-    actionsContainer.appendChild(newBtn);
-    console.log('[Kanban Widget] SUCESSO! Botão adicionado ao container');
-
+    actionGroup.prepend(btn);
     return true;
   }
 
@@ -398,308 +332,180 @@
     if (document.getElementById('cw-kanban-modal-overlay')) return;
     var overlay = document.createElement('div');
     overlay.id = 'cw-kanban-modal-overlay';
-    overlay.onclick = function(e) { if (e.target === overlay) window.closeKanbanWidgetModal(); };
-    overlay.innerHTML = '<div id="cw-kanban-modal"><div class="modal-header"><h3>Configurações do Kanban</h3><button class="close-btn" onclick="window.closeKanbanWidgetModal()">&times;</button></div><div class="modal-body" id="cw-kanban-modal-body"><div class="loading"><div class="spinner"></div><span>Carregando...</span></div></div></div>';
+    overlay.innerHTML = '<div id="cw-kanban-modal"><div class="modal-header"><h3>Kanban & Agendamento</h3><button class="close-btn" onclick="document.getElementById(\'cw-kanban-modal-overlay\').classList.remove(\'visible\')">&times;</button></div><div class="modal-body" id="cw-kanban-modal-body"></div></div>';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.classList.remove('visible'); };
     document.body.appendChild(overlay);
   }
 
-  window.openKanbanWidgetModal = function() {
-    var overlay = document.getElementById('cw-kanban-modal-overlay');
-    overlay.classList.add('visible');
-    widgetModalState.view = 'main';
-    widgetModalState.selectedFunnel = null;
-    loadWidgetModalData();
-  };
-
-  window.closeKanbanWidgetModal = function() {
-    var overlay = document.getElementById('cw-kanban-modal-overlay');
-    overlay.classList.remove('visible');
-  };
-
-  async function loadWidgetModalData() {
+  async function renderWidgetModalContent() {
     var body = document.getElementById('cw-kanban-modal-body');
-    body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Carregando...</span></div>';
-
-    var authHeaders = getAuthHeaders();
-    if (!authHeaders) {
-      body.innerHTML = '<div class="error-msg">Token de autenticacao nao encontrado. Faca login novamente.</div>';
-      return;
-    }
-
-    try {
-      var funnelsRes = await fetch(WIDGET_CONFIG.apiUrl + '/funnels', {
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders)
-      });
-      if (!funnelsRes.ok) throw new Error('Erro ao carregar funis');
-      var funnelsData = await funnelsRes.json();
-      widgetModalState.funnels = funnelsData.data || [];
-
-      if (currentConversationId) {
-        var stageRes = await fetch(WIDGET_CONFIG.apiUrl + '/kanban/conversation/' + currentConversationId + '/stage', {
-          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders)
-        });
-        if (stageRes.ok) {
-          var stageData = await stageRes.json();
-          widgetModalState.currentStage = stageData.data;
-        }
-
-        var scheduledRes = await fetch(WIDGET_CONFIG.apiUrl + '/conversations/' + currentConversationId + '/scheduled-messages', {
-          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders)
-        });
-        if (scheduledRes.ok) {
-          var scheduledData = await scheduledRes.json();
-          widgetModalState.scheduledMessages = scheduledData.data || [];
-        }
-      }
-
-      renderWidgetModalContent();
-    } catch (err) {
-      body.innerHTML = '<div class="error-msg">' + err.message + '</div>';
-    }
-  }
-
-  function formatDateTime(dateString) {
-    var date = new Date(dateString);
-    return date.toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  function getStatusLabel(status) {
-    var labels = {
-      'pending': 'Pendente',
-      'sent': 'Enviada',
-      'cancelled': 'Cancelada',
-      'failed': 'Falhou'
-    };
-    return labels[status] || status;
-  }
-
-  function renderWidgetModalContent() {
-    var body = document.getElementById('cw-kanban-modal-body');
-    var html = '';
+    if (!body) return;
 
     if (widgetModalState.view === 'main') {
-      html += '<div class="menu-option" onclick="window.showFunnelsView()"><div class="menu-option-icon">📊</div><div class="menu-option-content"><div class="menu-option-title">Associar ao Funil</div><div class="menu-option-desc">Vincular conversa a uma etapa do kanban</div></div></div>';
-      html += '<div class="menu-option" onclick="window.showSchedulingView()"><div class="menu-option-icon">⏰</div><div class="menu-option-content"><div class="menu-option-title">Agendar Mensagens</div><div class="menu-option-desc">Programar envio de mensagens</div></div></div>';
-    }
-
-    else if (widgetModalState.view === 'funnels') {
-      html += '<button class="back-btn" onclick="window.showMainView()">← Voltar</button>';
-
-      if (widgetModalState.currentStage) {
-        html += '<div class="current-stage"><span class="label">Etapa atual:</span><span class="value">' + widgetModalState.currentStage.funnelName + ' → ' + widgetModalState.currentStage.stageName + '</span><button class="remove-btn" onclick="window.removeFromKanbanWidget()">Remover</button></div>';
-      }
-
-      html += '<p class="section-title">📊 Selecione um funil:</p><div class="list">';
-      if (widgetModalState.funnels.length === 0) {
-        html += '<div class="empty-state">Nenhum funil encontrado. Crie um funil no Kanban primeiro.</div>';
-      } else {
-        widgetModalState.funnels.forEach(function(funnel) {
-          html += '<button class="list-item" onclick="window.selectKanbanWidgetFunnel(' + funnel.id + ')"><div class="color-dot" style="background-color:' + funnel.color + '"></div><span class="item-name">' + funnel.name + '</span><span class="item-count">' + funnel.stages.length + ' etapas</span></button>';
+      body.innerHTML = '<div class="list"><div class="menu-option" onclick="window.setWidgetView(\'funnels\')"><div class="menu-option-icon">📊</div><div class="menu-option-content"><div class="menu-option-title">Mover no Funil</div><div class="menu-option-desc">Alterar o estágio desta conversa no Kanban</div></div></div><div class="menu-option" onclick="window.setWidgetView(\'scheduling\')"><div class="menu-option-icon">⏰</div><div class="menu-option-content"><div class="menu-option-title">Agendar Mensagem</div><div class="menu-option-desc">Programar mensagens para envio futuro</div></div></div></div>';
+    } else if (widgetModalState.view === 'funnels') {
+      body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'main\')">← Voltar</button><div class="loading"><div class="spinner"></div><span>Carregando funis...</span></div>';
+      try {
+        var authHeaders = getAuthHeaders();
+        if (!authHeaders) throw new Error('Sessão não encontrada');
+        var res = await fetch(WIDGET_CONFIG.apiUrl + '/kanban/funnels', { headers: authHeaders });
+        if (!res.ok) throw new Error('Erro ao carregar funis');
+        var data = await res.json();
+        widgetModalState.funnels = data.data;
+        if (widgetModalState.funnels.length === 0) {
+          body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'main\')">← Voltar</button><div class="empty-state">Nenhum funil configurado.</div>';
+          return;
+        }
+        var html = '<button class="back-btn" onclick="window.setWidgetView(\'main\')">← Voltar</button><div class="section-title">Selecione o Funil</div><div class="list">';
+        widgetModalState.funnels.forEach(function(f) {
+          html += '<button class="list-item" onclick="window.selectFunnel(' + f.id + ')"><div class="item-name">' + f.name + '</div><div class="item-count">' + f.stages.length + ' estágios</div></button>';
         });
+        html += '</div>';
+        body.innerHTML = html;
+      } catch (err) {
+        body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'main\')">← Voltar</button><div class="error-msg">' + err.message + '</div>';
       }
-      html += '</div>';
-    }
-
-    else if (widgetModalState.view === 'funnelStages') {
-      html += '<button class="back-btn" onclick="window.showFunnelsView()">← Voltar</button>';
-      html += '<p class="section-title"><div class="color-dot" style="background-color:' + widgetModalState.selectedFunnel.color + '"></div>' + widgetModalState.selectedFunnel.name + '</p><div class="list">';
-      widgetModalState.selectedFunnel.stages.forEach(function(stage) {
-        var isSelected = widgetModalState.currentStage && widgetModalState.currentStage.stageId === stage.id;
-        html += '<button class="list-item' + (isSelected ? ' selected' : '') + '" onclick="window.selectKanbanWidgetStage(' + stage.id + ')"><div class="color-dot" style="background-color:' + stage.color + '"></div><span class="item-name">' + stage.name + '</span></button>';
+    } else if (widgetModalState.view === 'stages') {
+      var funnel = widgetModalState.selectedFunnel;
+      var html = '<button class="back-btn" onclick="window.setWidgetView(\'funnels\')">← Voltar para Funis</button><div class="section-title">Estágios de ' + funnel.name + '</div>';
+      if (widgetModalState.currentStage) {
+        html += '<div class="current-stage"><div class="label">Estágio Atual:</div><div class="value">' + widgetModalState.currentStage.stageName + '</div><button class="remove-btn" onclick="window.removeFromKanban()">Remover</button></div>';
+      }
+      html += '<div class="list">';
+      funnel.stages.forEach(function(s) {
+        var isCurrent = widgetModalState.currentStage && widgetModalState.currentStage.stageId === s.id;
+        html += '<button class="list-item' + (isCurrent ? ' selected' : '') + '" onclick="window.moveToStage(' + s.id + ')"><div class="color-dot" style="background:' + (s.color || '#e5e7eb') + '"></div><div class="item-name">' + s.name + '</div></button>';
       });
       html += '</div>';
-    }
-
-    else if (widgetModalState.view === 'scheduling') {
-      html += '<button class="back-btn" onclick="window.showMainView()">← Voltar</button>';
-      html += '<p class="section-title">⏰ Nova Mensagem Agendada</p>';
-      html += '<div class="form-group"><label class="form-label">Mensagem</label><textarea class="form-textarea" id="schedule-message-text" placeholder="Digite a mensagem..."></textarea></div>';
-      html += '<div class="form-group"><label class="form-label">Data e Hora</label><input type="datetime-local" class="form-input" id="schedule-message-date"></div>';
-      html += '<div class="form-group"><label class="form-label">Anexo (opcional)</label><input type="file" class="form-input" id="schedule-attachment" accept="image/*,application/pdf,.doc,.docx"></div>';
-      html += '<button class="btn-primary" onclick="window.createScheduledMessage()">Agendar Mensagem</button>';
-
-      if (widgetModalState.scheduledMessages.length > 0) {
-        html += '<hr class="section-divider">';
-        html += '<p class="section-title">📋 Mensagens Agendadas</p>';
-        widgetModalState.scheduledMessages.forEach(function(msg) {
-          html += '<div class="scheduled-item">';
-          html += '<div class="scheduled-header">';
-          html += '<span class="scheduled-date">' + formatDateTime(msg.scheduledAt) + '</span>';
-          html += '<span class="scheduled-status status-' + msg.status + '">' + getStatusLabel(msg.status) + '</span>';
-          html += '</div>';
-          html += '<div class="scheduled-message">' + msg.message + '</div>';
-
-          if (msg.attachments) {
-            try {
-              var attachments = JSON.parse(msg.attachments);
-              if (attachments.length > 0) {
-                html += '<div class="scheduled-attachment">📎 ' + attachments[0].originalName + '</div>';
-              }
-            } catch (e) {}
-          }
-
-          if (msg.status === 'pending') {
-            html += '<div class="scheduled-actions">';
-            html += '<button class="btn-small btn-edit" onclick="window.editScheduledMessage(' + msg.id + ')">Editar</button>';
-            html += '<button class="btn-small btn-cancel" onclick="window.cancelScheduledMessage(' + msg.id + ')">Cancelar</button>';
+      body.innerHTML = html;
+    } else if (widgetModalState.view === 'scheduling') {
+      body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'main\')">← Voltar</button><div class="loading"><div class="spinner"></div><span>Carregando agendamentos...</span></div>';
+      try {
+        var authHeaders = getAuthHeaders();
+        if (!authHeaders) throw new Error('Sessão não encontrada');
+        var res = await fetch(WIDGET_CONFIG.apiUrl + '/conversations/' + currentConversationId + '/scheduled-messages', { headers: authHeaders });
+        if (!res.ok) throw new Error('Erro ao carregar mensagens');
+        var data = await res.json();
+        widgetModalState.scheduledMessages = data.data;
+        var html = '<button class="back-btn" onclick="window.setWidgetView(\'main\')">← Voltar</button><div class="section-title">Agendamentos</div><button class="btn-primary" style="margin-bottom:16px" onclick="window.setWidgetView(\'create_schedule\')">+ Novo Agendamento</button>';
+        if (widgetModalState.scheduledMessages.length === 0) {
+          html += '<div class="empty-state">Nenhuma mensagem agendada.</div>';
+        } else {
+          html += '<div class="list">';
+          widgetModalState.scheduledMessages.forEach(function(m) {
+            var date = new Date(m.scheduledAt).toLocaleString();
+            html += '<div class="scheduled-item"><div class="scheduled-header"><div class="scheduled-date">' + date + '</div><div class="scheduled-status status-' + m.status + '">' + m.status.toUpperCase() + '</div></div><div class="scheduled-message">' + m.content + '</div>';
+            if (m.attachments && m.attachments.length > 0) {
+              html += '<div class="scheduled-attachment">📎 ' + m.attachments[0].fileName + '</div>';
+            }
+            if (m.status === 'pending') {
+              html += '<div class="scheduled-actions"><button class="btn-small btn-edit" onclick="window.editScheduledMessage(' + m.id + ')">Editar</button><button class="btn-small btn-cancel" onclick="window.cancelScheduledMessage(' + m.id + ')">Cancelar</button></div>';
+            }
             html += '</div>';
-          }
+          });
           html += '</div>';
-        });
+        }
+        body.innerHTML = html;
+      } catch (err) {
+        body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'main\')">← Voltar</button><div class="error-msg">' + err.message + '</div>';
       }
-    }
-
-    else if (widgetModalState.view === 'edit-schedule' && widgetModalState.editingMessage) {
-      var msg = widgetModalState.editingMessage;
-      html += '<button class="back-btn" onclick="window.showSchedulingView()">← Voltar</button>';
-      html += '<p class="section-title">✏️ Editar Mensagem Agendada</p>';
-      html += '<div class="form-group"><label class="form-label">Mensagem</label><textarea class="form-textarea" id="edit-message-text">' + msg.message + '</textarea></div>';
-
-      var dateValue = new Date(msg.scheduledAt).toISOString().slice(0, 16);
-      html += '<div class="form-group"><label class="form-label">Data e Hora</label><input type="datetime-local" class="form-input" id="edit-message-date" value="' + dateValue + '"></div>';
-
-      var hasAttachment = false;
-      if (msg.attachments) {
-        try {
-          var attachments = JSON.parse(msg.attachments);
-          if (attachments.length > 0) {
-            hasAttachment = true;
-            html += '<div class="form-group"><label class="form-label">Anexo Atual</label><div class="current-attachment">📎 ' + attachments[0].originalName + ' <button class="btn-small btn-cancel" onclick="window.removeAttachment()">Remover</button></div></div>';
-          }
-        } catch (e) {}
+    } else if (widgetModalState.view === 'create_schedule') {
+      var html = '<button class="back-btn" onclick="window.setWidgetView(\'scheduling\')">← Voltar</button><div class="section-title">Novo Agendamento</div><div class="form-group"><label class="form-label">Data e Hora</label><input type="datetime-local" id="schedule-date" class="form-input"></div><div class="form-group"><label class="form-label">Mensagem</label><textarea id="schedule-content" class="form-textarea" placeholder="Digite sua mensagem..."></textarea></div><div class="form-group"><label class="form-label">Anexo (Opcional)</label><input type="file" id="schedule-file" class="form-input"></div><button class="btn-primary" onclick="window.submitSchedule()">Agendar Mensagem</button>';
+      body.innerHTML = html;
+    } else if (widgetModalState.view === 'edit_schedule') {
+      var m = widgetModalState.editingMessage;
+      var date = new Date(m.scheduledAt).toISOString().slice(0, 16);
+      var html = '<button class="back-btn" onclick="window.setWidgetView(\'scheduling\')">← Voltar</button><div class="section-title">Editar Agendamento</div><div class="form-group"><label class="form-label">Data e Hora</label><input type="datetime-local" id="schedule-date" class="form-input" value="' + date + '"></div><div class="form-group"><label class="form-label">Mensagem</label><textarea id="schedule-content" class="form-textarea">' + m.content + '</textarea></div>';
+      if (m.attachments && m.attachments.length > 0 && !widgetModalState.removeAttachmentFlag) {
+        html += '<div class="form-group"><label class="form-label">Anexo Atual</label><div class="current-attachment"><span>📎 ' + m.attachments[0].fileName + '</span><button class="remove-btn" onclick="window.removeAttachment()">Remover</button></div></div>';
       }
-
-      html += '<div class="form-group"><label class="form-label">' + (hasAttachment ? 'Substituir Anexo' : 'Adicionar Anexo') + ' (opcional)</label><input type="file" class="form-input" id="edit-attachment" accept="image/*,application/pdf,.doc,.docx"></div>';
-      html += '<button class="btn-primary" onclick="window.saveEditedMessage()">Salvar Alterações</button>';
+      html += '<div class="form-group"><label class="form-label">Substituir Anexo (Opcional)</label><input type="file" id="schedule-file" class="form-input"></div><button class="btn-primary" onclick="window.submitUpdateSchedule()">Salvar Alterações</button>';
+      body.innerHTML = html;
     }
-
-    body.innerHTML = html;
   }
 
-  window.showMainView = function() {
-    widgetModalState.view = 'main';
+  window.setWidgetView = function(view) {
+    widgetModalState.view = view;
     renderWidgetModalContent();
   };
 
-  window.showFunnelsView = function() {
-    widgetModalState.view = 'funnels';
+  window.selectFunnel = function(id) {
+    widgetModalState.selectedFunnel = widgetModalState.funnels.find(function(f) { return f.id === id; });
+    widgetModalState.view = 'stages';
     renderWidgetModalContent();
   };
 
-  window.showSchedulingView = function() {
-    widgetModalState.view = 'scheduling';
-    renderWidgetModalContent();
-  };
-
-  window.selectKanbanWidgetFunnel = function(funnelId) {
-    widgetModalState.selectedFunnel = widgetModalState.funnels.find(function(f) { return f.id === funnelId; });
-    widgetModalState.view = 'funnelStages';
-    renderWidgetModalContent();
-  };
-
-  window.selectKanbanWidgetStage = async function(stageId) {
-    var authHeaders = getAuthHeaders();
-    if (!authHeaders || !currentConversationId) return;
-
+  window.moveToStage = async function(stageId) {
     var body = document.getElementById('cw-kanban-modal-body');
-    body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Salvando...</span></div>';
-
+    body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Movendo conversa...</span></div>';
     try {
-      var res = await fetch(WIDGET_CONFIG.apiUrl + '/kanban/' + currentConversationId + '/move-to-stage', {
-        method: 'PATCH',
+      var authHeaders = getAuthHeaders();
+      if (!authHeaders) throw new Error('Sessão não encontrada');
+      var res = await fetch(WIDGET_CONFIG.apiUrl + '/kanban/move', {
+        method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders),
-        body: JSON.stringify({ stageId: stageId })
+        body: JSON.stringify({ conversationId: currentConversationId, stageId: stageId })
       });
-
-      if (!res.ok) throw new Error('Erro ao salvar');
-
-      var stage = widgetModalState.selectedFunnel.stages.find(function(s) { return s.id === stageId; });
-      widgetModalState.currentStage = {
-        stageId: stageId,
-        stageName: stage.name,
-        stageColor: stage.color,
-        funnelId: widgetModalState.selectedFunnel.id,
-        funnelName: widgetModalState.selectedFunnel.name
-      };
-
+      if (!res.ok) throw new Error('Erro ao mover conversa');
+      var data = await res.json();
+      widgetModalState.currentStage = data.data;
       updateHeaderButton();
-      body.innerHTML = '<div class="success-msg">✓ Conversa associada com sucesso!</div>';
+      body.innerHTML = '<div class="success-msg">✓ Conversa movida com sucesso!</div>';
       setTimeout(function() {
-        widgetModalState.view = 'main';
+        widgetModalState.view = 'stages';
         renderWidgetModalContent();
       }, 1500);
     } catch (err) {
-      body.innerHTML = '<div class="error-msg">' + err.message + '</div>';
+      body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'stages\')">← Voltar</button><div class="error-msg">' + err.message + '</div>';
     }
   };
 
-  window.removeFromKanbanWidget = async function() {
-    var authHeaders = getAuthHeaders();
-    if (!authHeaders || !currentConversationId) return;
-
+  window.removeFromKanban = async function() {
+    if (!confirm('Deseja realmente remover esta conversa do Kanban?')) return;
     var body = document.getElementById('cw-kanban-modal-body');
     body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Removendo...</span></div>';
-
     try {
-      var res = await fetch(WIDGET_CONFIG.apiUrl + '/kanban/' + currentConversationId + '/remove', {
+      var authHeaders = getAuthHeaders();
+      if (!authHeaders) throw new Error('Sessão não encontrada');
+      var res = await fetch(WIDGET_CONFIG.apiUrl + '/kanban/conversation/' + currentConversationId, {
         method: 'DELETE',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders)
+        headers: authHeaders
       });
-
-      if (!res.ok) throw new Error('Erro ao remover');
-
+      if (!res.ok) throw new Error('Erro ao remover do Kanban');
       widgetModalState.currentStage = null;
       updateHeaderButton();
-      body.innerHTML = '<div class="success-msg">✓ Conversa removida do kanban!</div>';
+      body.innerHTML = '<div class="success-msg">✓ Removida com sucesso!</div>';
       setTimeout(function() {
-        widgetModalState.view = 'main';
+        widgetModalState.view = 'stages';
         renderWidgetModalContent();
       }, 1500);
     } catch (err) {
-      body.innerHTML = '<div class="error-msg">' + err.message + '</div>';
+      body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'stages\')">← Voltar</button><div class="error-msg">' + err.message + '</div>';
     }
   };
 
-  window.createScheduledMessage = async function() {
-    var messageEl = document.getElementById('schedule-message-text');
-    var dateEl = document.getElementById('schedule-message-date');
-    var attachmentEl = document.getElementById('schedule-attachment');
-
-    if (!messageEl || !dateEl) return;
-
-    var message = messageEl.value.trim();
-    var scheduledAt = dateEl.value;
-    var hasAttachment = attachmentEl && attachmentEl.files && attachmentEl.files[0];
-
-    if (!message && !hasAttachment) {
-      alert('Por favor, digite uma mensagem ou anexe um arquivo');
-      return;
-    }
-
-    if (!scheduledAt) {
-      alert('Por favor, selecione data e hora');
-      return;
-    }
-
-    var authHeaders = getAuthHeaders();
-    if (!authHeaders || !currentConversationId) return;
-
+  window.submitSchedule = async function() {
+    var date = document.getElementById('schedule-date').value;
+    var content = document.getElementById('schedule-content').value;
+    var fileInput = document.getElementById('schedule-file');
     var body = document.getElementById('cw-kanban-modal-body');
+
+    if (!date || !content) {
+      alert('Preencha a data e a mensagem');
+      return;
+    }
+
     body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Agendando...</span></div>';
 
     try {
-      var formData = new FormData();
-      formData.append('message', message);
-      formData.append('scheduledAt', new Date(scheduledAt).toISOString());
+      var authHeaders = getAuthHeaders();
+      if (!authHeaders) throw new Error('Sessão não encontrada');
 
-      if (attachmentEl && attachmentEl.files && attachmentEl.files[0]) {
-        formData.append('attachment', attachmentEl.files[0]);
+      var formData = new FormData();
+      formData.append('scheduledAt', new Date(date).toISOString());
+      formData.append('content', content);
+      if (fileInput.files.length > 0) {
+        formData.append('attachment', fileInput.files[0]);
       }
 
       var res = await fetch(WIDGET_CONFIG.apiUrl + '/conversations/' + currentConversationId + '/scheduled-messages', {
@@ -713,91 +519,59 @@
         throw new Error(errorData.error || 'Erro ao agendar mensagem');
       }
 
-      var result = await res.json();
-      widgetModalState.scheduledMessages.push(result.data);
-
       body.innerHTML = '<div class="success-msg">✓ Mensagem agendada com sucesso!</div>';
       setTimeout(function() {
+        widgetModalState.view = 'scheduling';
         renderWidgetModalContent();
       }, 1500);
     } catch (err) {
-      body.innerHTML = '<div class="error-msg">' + err.message + '</div><button class="btn-primary" style="margin-top:12px" onclick="window.showSchedulingView()">Voltar</button>';
+      body.innerHTML = '<button class="back-btn" onclick="window.setWidgetView(\'create_schedule\')">← Voltar</button><div class="error-msg">' + err.message + '</div>';
     }
   };
 
-  window.cancelScheduledMessage = async function(msgId) {
-    if (!confirm('Deseja realmente cancelar esta mensagem agendada?')) return;
-
-    var authHeaders = getAuthHeaders();
-    if (!authHeaders || !currentConversationId) return;
-
-    var body = document.getElementById('cw-kanban-modal-body');
-    body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Cancelando...</span></div>';
-
+  window.cancelScheduledMessage = async function(id) {
+    if (!confirm('Deseja realmente cancelar este agendamento?')) return;
     try {
-      var res = await fetch(WIDGET_CONFIG.apiUrl + '/conversations/' + currentConversationId + '/scheduled-messages/' + msgId, {
+      var authHeaders = getAuthHeaders();
+      if (!authHeaders) throw new Error('Sessão não encontrada');
+      var res = await fetch(WIDGET_CONFIG.apiUrl + '/conversations/' + currentConversationId + '/scheduled-messages/' + id, {
         method: 'DELETE',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders)
+        headers: authHeaders
       });
-
-      if (!res.ok) throw new Error('Erro ao cancelar mensagem');
-
-      widgetModalState.scheduledMessages = widgetModalState.scheduledMessages.filter(function(m) { return m.id !== msgId; });
-
-      body.innerHTML = '<div class="success-msg">✓ Mensagem cancelada!</div>';
-      setTimeout(function() {
-        renderWidgetModalContent();
-      }, 1500);
+      if (!res.ok) throw new Error('Erro ao cancelar agendamento');
+      widgetModalState.scheduledMessages = widgetModalState.scheduledMessages.filter(function(m) { return m.id !== id; });
+      renderWidgetModalContent();
     } catch (err) {
-      body.innerHTML = '<div class="error-msg">' + err.message + '</div><button class="btn-primary" style="margin-top:12px" onclick="window.showSchedulingView()">Voltar</button>';
+      alert(err.message);
     }
   };
 
-  window.editScheduledMessage = function(msgId) {
-    var msg = widgetModalState.scheduledMessages.find(function(m) { return m.id === msgId; });
+  window.editScheduledMessage = function(id) {
+    var msg = widgetModalState.scheduledMessages.find(function(m) { return m.id === id; });
     if (!msg) return;
-
-    widgetModalState.editingMessage = msg;
+    widgetModalState.editingMessage = JSON.parse(JSON.stringify(msg));
     widgetModalState.removeAttachmentFlag = false;
-    widgetModalState.view = 'edit-schedule';
+    widgetModalState.view = 'edit_schedule';
     renderWidgetModalContent();
   };
 
-  window.saveEditedMessage = async function() {
-    var messageEl = document.getElementById('edit-message-text');
-    var dateEl = document.getElementById('edit-message-date');
-    var attachmentEl = document.getElementById('edit-attachment');
-
-    if (!messageEl || !dateEl || !widgetModalState.editingMessage) return;
-
-    var message = messageEl.value.trim();
-    var scheduledAt = dateEl.value;
-    var hasAttachment = (attachmentEl && attachmentEl.files && attachmentEl.files[0]) ||
-                       (widgetModalState.editingMessage.attachments && !widgetModalState.removeAttachmentFlag);
-
-    if (!message && !hasAttachment) {
-      alert('Por favor, digite uma mensagem ou anexe um arquivo');
-      return;
-    }
-
-    if (!scheduledAt) {
-      alert('Por favor, selecione data e hora');
-      return;
-    }
-
-    var authHeaders = getAuthHeaders();
-    if (!authHeaders || !currentConversationId) return;
-
+  window.submitUpdateSchedule = async function() {
+    var date = document.getElementById('schedule-date').value;
+    var content = document.getElementById('schedule-content').value;
+    var fileInput = document.getElementById('schedule-file');
     var body = document.getElementById('cw-kanban-modal-body');
+
     body.innerHTML = '<div class="loading"><div class="spinner"></div><span>Salvando...</span></div>';
 
     try {
-      var formData = new FormData();
-      formData.append('message', message);
-      formData.append('scheduledAt', new Date(scheduledAt).toISOString());
+      var authHeaders = getAuthHeaders();
+      if (!authHeaders) throw new Error('Sessão não encontrada');
 
-      if (attachmentEl && attachmentEl.files && attachmentEl.files[0]) {
-        formData.append('attachment', attachmentEl.files[0]);
+      var formData = new FormData();
+      formData.append('scheduledAt', new Date(date).toISOString());
+      formData.append('content', content);
+      if (fileInput.files.length > 0) {
+        formData.append('attachment', fileInput.files[0]);
       }
 
       if (widgetModalState.removeAttachmentFlag) {
