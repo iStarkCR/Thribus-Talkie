@@ -114,6 +114,14 @@ microsoft:
   icon: 'icon-microsoft'
   config_key: 'microsoft'
 
+# ------- Internal Config ------- #
+internal:
+  name: 'Internal Config'
+  description: 'Advanced internal configuration for the installation.'
+  enabled: true
+  icon: 'icon-settings-2-line'
+  config_key: 'internal'
+
 # ------- Third-party Integrations ------- #
 linear:
   name: 'Linear'
